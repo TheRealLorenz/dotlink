@@ -9,6 +9,7 @@ use std::{
 
 lazy_static! {
     static ref BLACKLISTED: &'static [&'static str; 3] = &[".git", "README.md", ".gitignore"];
+    static ref CONFIG_DIR: &'static str = "~/.config/";
 }
 
 fn symlink(a: &Path, b: &Path) {
@@ -45,24 +46,31 @@ fn link_dir(path: &Path) -> Result<(), io::Error> {
         .filter(|entry| !is_blacklisted(&entry.as_ref().unwrap().path()))
         .for_each(|entry| {
             let entry = entry.unwrap();
-            link_file(&entry.path());
+            match link_entry(&entry.path()) {
+                Ok(()) => (),
+                Err(err) => println!(
+                    "Couldn't link '{}': {}",
+                    entry.file_name().to_string_lossy(),
+                    err
+                ),
+            }
         });
 
     Ok(())
 }
 
-fn link_file(path: &Path) {
+fn link_entry(path: &Path) -> Result<(), Box<dyn Error>> {
     #[cfg(debug_assertions)]
     println!("Linking '{}'", path.display());
 
     if is_blacklisted(path) {
-        return;
+        return Ok(());
     }
 
-    match expand_path(path) {
-        Ok(path) => symlink(path.as_path(), path.as_path()),
-        Err(err) => println!("Couldn't expand path '{}': {}", path.display(), err),
-    }
+    Ok(symlink(
+        &expand_path(path)?,
+        &expand_path(Path::new(&CONFIG_DIR.to_string()))?,
+    ))
 }
 
 fn main() {
