@@ -52,6 +52,9 @@ fn link_dir(path: &Path) -> Result<(), io::Error> {
 }
 
 fn link_file(path: &Path) {
+    #[cfg(debug_assertions)]
+    println!("Linking '{}'", path.display());
+
     if is_blacklisted(path) {
         return;
     }
