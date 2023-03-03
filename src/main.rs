@@ -22,13 +22,13 @@ fn symlink(a: &Path, b: &Path) {
 
 fn expand_path(path: &Path) -> Result<PathBuf, Box<dyn Error>> {
     if !path.starts_with("~") {
-        return Ok(home_dir()
-            .ok_or("Couldn't retreive home dir path")?
-            .join(path.strip_prefix("~")?)
-            .canonicalize()?);
+        return Ok(path.canonicalize()?);
     }
 
-    Ok(path.canonicalize()?)
+    Ok(home_dir()
+        .ok_or("Couldn't retreive home dir path")?
+        .join(path.strip_prefix("~")?)
+        .canonicalize()?)
 }
 
 fn is_blacklisted(entry: &Path) -> bool {
