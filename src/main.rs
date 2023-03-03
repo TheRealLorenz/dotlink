@@ -42,7 +42,7 @@ fn is_blacklisted(entry: &Path) -> bool {
 
 fn link_dir(path: &Path) -> Result<(), io::Error> {
     path.read_dir()?
-        .filter(|entry| is_blacklisted(&entry.as_ref().unwrap().path()))
+        .filter(|entry| !is_blacklisted(&entry.as_ref().unwrap().path()))
         .for_each(|entry| {
             let entry = entry.unwrap();
             link_file(&entry.path());
