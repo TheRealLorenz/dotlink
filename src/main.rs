@@ -1,7 +1,7 @@
 use clap::Parser;
-use home::home_dir;
 use lazy_static::lazy_static;
 use std::{
+    env::{self, VarError},
     error::Error,
     io,
     path::{Path, PathBuf},
@@ -16,7 +16,7 @@ lazy_static! {
 struct Args {
     paths: Vec<String>,
 
-    #[arg(short, long, default_value_t = (&"~/.config").to_string())]
+    #[arg(short, long, default_value_t = (&"$XDG_CONFIG_HOME").to_string())]
     base_dir: String,
 }
 
@@ -34,8 +34,10 @@ fn expand_path(path: &Path) -> Result<PathBuf, Box<dyn Error>> {
         return Ok(path.canonicalize()?);
     }
 
-    Ok(home_dir()
-        .ok_or("Couldn't retreive home dir path")?
+    let prefix = env::var("XDG_CONFIG_HOME")
+        .or_else(|_| Ok::<_, VarError>(env::var("HOME")? + "/.config"))?;
+
+    Ok(PathBuf::from(prefix)
         .join(path.strip_prefix("~")?)
         .canonicalize()?)
 }
@@ -86,5 +88,6 @@ fn main() {
     #[cfg(debug_assertions)]
     println!("Args: {:?}", args);
 
-    link_dir(Path::new("."), &Path::new(&args.base_dir)).expect(format!("Failed to link '{}'", ".").as_str());
+    link_dir(Path::new("."), &Path::new(&args.base_dir))
+        .expect(format!("Failed to link '{}'", ".").as_str());
 }
