@@ -75,10 +75,9 @@ fn link_entry(path: &Path, to: &Path) -> Result<(), Box<dyn Error>> {
         return Ok(());
     }
 
-    Ok(symlink(
-        &expand_path(path)?,
-        &expand_path(to)?,
-    ))
+    symlink(&expand_path(path)?, &expand_path(to)?);
+
+    Ok(())
 }
 
 fn main() {
