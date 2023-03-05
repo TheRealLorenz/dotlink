@@ -1,3 +1,4 @@
+use clap::Parser;
 use home::home_dir;
 use lazy_static::lazy_static;
 use std::{
@@ -9,7 +10,14 @@ use std::{
 
 lazy_static! {
     static ref BLACKLISTED: &'static [&'static str; 3] = &[".git", "README.md", ".gitignore"];
-    static ref CONFIG_DIR: &'static str = "~/.config/";
+}
+
+#[derive(Parser, Debug)]
+struct Args {
+    paths: Vec<String>,
+
+    #[arg(short, long, default_value_t = (&"~/.config").to_string())]
+    base_dir: String,
 }
 
 fn symlink(a: &Path, b: &Path) {
@@ -41,12 +49,12 @@ fn is_blacklisted(entry: &Path) -> bool {
     )
 }
 
-fn link_dir(path: &Path) -> Result<(), io::Error> {
+fn link_dir(path: &Path, to: &Path) -> Result<(), io::Error> {
     path.read_dir()?
         .filter(|entry| !is_blacklisted(&entry.as_ref().unwrap().path()))
         .for_each(|entry| {
             let entry = entry.unwrap();
-            match link_entry(&entry.path()) {
+            match link_entry(&entry.path(), &to) {
                 Ok(()) => (),
                 Err(err) => println!(
                     "Couldn't link '{}': {}",
@@ -59,7 +67,7 @@ fn link_dir(path: &Path) -> Result<(), io::Error> {
     Ok(())
 }
 
-fn link_entry(path: &Path) -> Result<(), Box<dyn Error>> {
+fn link_entry(path: &Path, to: &Path) -> Result<(), Box<dyn Error>> {
     #[cfg(debug_assertions)]
     println!("Linking '{}'", path.display());
 
@@ -69,10 +77,15 @@ fn link_entry(path: &Path) -> Result<(), Box<dyn Error>> {
 
     Ok(symlink(
         &expand_path(path)?,
-        &expand_path(Path::new(&CONFIG_DIR.to_string()))?,
+        &expand_path(to)?,
     ))
 }
 
 fn main() {
-    link_dir(Path::new(".")).expect(format!("Failed to link '{}'", ".").as_str());
+    let args = Args::parse();
+
+    #[cfg(debug_assertions)]
+    println!("Args: {:?}", args);
+
+    link_dir(Path::new("."), &Path::new(&args.base_dir)).expect(format!("Failed to link '{}'", ".").as_str());
 }
