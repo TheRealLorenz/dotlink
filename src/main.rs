@@ -88,6 +88,13 @@ fn main() {
     #[cfg(debug_assertions)]
     println!("Args: {:?}", args);
 
-    link_dir(Path::new("."), &Path::new(&args.base_dir))
-        .expect(format!("Failed to link '{}'", ".").as_str());
+    if args.paths.is_empty() {
+        println!("No files to link");
+        return;
+    }
+
+    for path in &args.paths {
+        link_dir(Path::new(path), &Path::new(&args.base_dir))
+            .expect(format!("Failed to link '{}'", path).as_str());
+    }
 }
