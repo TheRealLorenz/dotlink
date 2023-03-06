@@ -3,7 +3,6 @@ use lazy_static::lazy_static;
 use std::{
     env::{self, VarError},
     error::Error,
-    io,
     path::{Path, PathBuf},
     process::Command,
 };
@@ -52,27 +51,9 @@ fn is_blacklisted(entry: &dyn AsRef<Path>) -> bool {
     )
 }
 
-fn link_dir(path: &Path, to: &Path) -> Result<(), io::Error> {
-    path.read_dir()?
-        .filter(|entry| !is_blacklisted(&entry.as_ref().unwrap().path()))
-        .for_each(|entry| {
-            let entry = entry.unwrap();
-            match link_entry(&entry.path(), &to) {
-                Ok(()) => (),
-                Err(err) => println!(
-                    "Couldn't link '{}': {}",
-                    entry.file_name().to_string_lossy(),
-                    err
-                ),
-            }
-        });
-
-    Ok(())
-}
-
 fn link_entry(path: &Path, to: &Path) -> Result<(), Box<dyn Error>> {
     #[cfg(debug_assertions)]
-    println!("Linking '{}'", path.display());
+    println!("Linking '{}' to '{}'", path.display(), to.display());
 
     if is_blacklisted(&path) {
         return Ok(());
@@ -94,8 +75,14 @@ fn main() {
         return;
     }
 
+    let base_path = Path::new(&args.base_dir);
+
     for path in &args.paths {
-        link_dir(Path::new(path), &Path::new(&args.base_dir))
+        if is_blacklisted(path) {
+            continue;
+        }
+
+        link_entry(Path::new(path), &base_path)
             .expect(format!("Failed to link '{}'", path).as_str());
     }
 }
