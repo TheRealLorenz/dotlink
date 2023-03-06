@@ -42,12 +42,13 @@ fn expand_path(path: &Path) -> Result<PathBuf, Box<dyn Error>> {
         .canonicalize()?)
 }
 
-fn is_blacklisted(entry: &Path) -> bool {
+fn is_blacklisted(entry: &dyn AsRef<Path>) -> bool {
     BLACKLISTED.contains(
         &entry
+            .as_ref()
             .file_name()
             .and_then(|name| name.to_str())
-            .expect(format!("Invalid file name '{}'", entry.to_string_lossy()).as_str()),
+            .expect(format!("Invalid file name '{}'", entry.as_ref().to_string_lossy()).as_str()),
     )
 }
 
@@ -73,7 +74,7 @@ fn link_entry(path: &Path, to: &Path) -> Result<(), Box<dyn Error>> {
     #[cfg(debug_assertions)]
     println!("Linking '{}'", path.display());
 
-    if is_blacklisted(path) {
+    if is_blacklisted(&path) {
         return Ok(());
     }
 
