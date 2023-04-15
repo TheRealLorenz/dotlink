@@ -18,6 +18,9 @@ struct Args {
     #[arg(short = 'F', long)]
     /// Custom config file location
     file: Option<PathBuf>,
+
+    #[arg(long)]
+    dry_run: bool
 }
 
 fn main() -> io::Result<()> {
@@ -49,7 +52,7 @@ fn main() -> io::Result<()> {
     });
 
     println!("Loaded preset: {}", args.preset);
-    preset.apply(pwd)?;
+    preset.apply(pwd, args.dry_run)?;
 
     Ok(())
 }

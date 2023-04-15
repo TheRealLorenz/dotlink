@@ -15,8 +15,12 @@ pub fn expand_tilde(path: &Path) -> PathBuf {
     }
 }
 
-pub fn symlink(from_dir: &PathBuf, name: &String, to: &String) -> io::Result<()> {
+pub fn symlink(from_dir: &PathBuf, name: &String, to: &String, dry_run: bool) -> io::Result<()> {
     println!("Symlinking '{name}' to '{to}'");
+
+    if dry_run {
+        return Ok(())
+    }
 
     let from = PathBuf::from(from_dir).join(name);
     let to = expand_tilde(Path::new(to));
