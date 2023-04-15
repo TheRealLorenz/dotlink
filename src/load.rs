@@ -57,14 +57,8 @@ impl Preset {
     pub fn apply(&self, from_dir: PathBuf) -> io::Result<()> {
         for entry in &self.link {
             match entry {
-                Entry::SimpleEntry(name) => utils::symlink(
-                    PathBuf::from(&from_dir).join(name),
-                    utils::expand_tilde(Path::new(&self.to)),
-                ),
-                Entry::CustomEntry(a) => utils::symlink(
-                    PathBuf::from(&from_dir).join(&a.name),
-                    utils::expand_tilde(Path::new(&a.to)),
-                ),
+                Entry::SimpleEntry(name) => utils::symlink(&from_dir, name, &self.to),
+                Entry::CustomEntry(a) => utils::symlink(&from_dir, &a.name, &a.to),
             }?;
         }
 

@@ -15,7 +15,10 @@ pub fn expand_tilde(path: &Path) -> PathBuf {
     }
 }
 
-pub fn symlink<P: AsRef<Path>, Q: AsRef<Path>>(from: P, to: Q) -> io::Result<()> {
+pub fn symlink(from_dir: &PathBuf, name: &String, to: &String) -> io::Result<()> {
+    let from = PathBuf::from(from_dir).join(name);
+    let to = expand_tilde(Path::new(to));
+
     std::os::unix::fs::symlink(from, to)?;
 
     Ok(())
