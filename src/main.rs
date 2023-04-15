@@ -1,7 +1,7 @@
 use clap::Parser;
 use std::{env, io, path::PathBuf};
 
-mod load;
+mod preset;
 mod utils;
 
 #[derive(Parser, Debug)]
@@ -39,7 +39,7 @@ fn main() -> io::Result<()> {
         .map(|path| utils::expand_tilde(&path).canonicalize())
         .unwrap_or_else(|| Ok(pwd.join("dotlink.toml")))?;
 
-    let presets = load::Presets::from_file(&config_file_path)?;
+    let presets = preset::Presets::from_file(&config_file_path)?;
 
     if args.list_presets {
         println!("Available presets: {}", presets.names().join(", "));
