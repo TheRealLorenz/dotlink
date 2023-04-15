@@ -15,9 +15,9 @@ struct Args {
     #[arg(short, long)]
     list_presets: bool,
 
-    #[arg(short, long)]
+    #[arg(short = 'F', long)]
     /// Custom config file location
-    config_file: Option<PathBuf>,
+    file: Option<PathBuf>,
 }
 
 fn main() -> io::Result<()> {
@@ -28,10 +28,13 @@ fn main() -> io::Result<()> {
 
     let pwd = args
         .path
-        .map(|path| path.canonicalize())
+        .map(|path| utils::expand_tilde(&path).canonicalize())
         .unwrap_or(env::current_dir())?;
 
-    let config_file_path = args.config_file.unwrap_or_else(|| pwd.join("dotlink.toml"));
+    let config_file_path = args
+        .file
+        .map(|path| utils::expand_tilde(&path).canonicalize())
+        .unwrap_or_else(|| Ok(pwd.join("dotlink.toml")))?;
 
     let presets = load::Presets::from_file(&config_file_path)?;
 
