@@ -103,7 +103,7 @@ fn main() {
         eprintln!("{e}");
 
         #[cfg(debug_assertions)]
-        println!("Error: {e:#?}");
+        eprintln!("Error: {e:#?}");
 
         std::process::exit(1);
     }

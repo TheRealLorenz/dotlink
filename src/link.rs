@@ -17,7 +17,7 @@ pub fn symlink(from: &PathBuf, to: &PathBuf, dry_run: bool) {
         Ok(_) => println!("{}", "✓".green().bold()),
         Err(e) => {
             println!("{}", "X".red().bold());
-            println!("  - {e}")
+            eprintln!("  - {e}")
         }
     };
 }
