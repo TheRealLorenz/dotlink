@@ -1,5 +1,5 @@
 [presets.base]
-link = [
+links = [
   "zsh",
   "foot",
   "sway",
@@ -9,7 +9,7 @@ link = [
 to = "~/.config"
 
 [presets.macOS]
-link = [
+links = [
   "zsh",
   "foot",
   { name = "tmux.conf", to = "~/.tmux.conf" }

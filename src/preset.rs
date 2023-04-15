@@ -15,7 +15,7 @@ pub struct Presets {
 
 #[derive(Deserialize, Debug)]
 pub struct Preset {
-    link: Vec<Entry>,
+    links: Vec<Entry>,
     to: String,
 }
 
@@ -55,7 +55,7 @@ impl Presets {
 
 impl Preset {
     pub fn apply(&self, from_dir: PathBuf, dry_run: bool) -> io::Result<()> {
-        for entry in &self.link {
+        for entry in &self.links {
             match entry {
                 Entry::SimpleEntry(name) => utils::symlink(&from_dir, name, &self.to, dry_run),
                 Entry::CustomEntry(a) => utils::symlink(&from_dir, &a.name, &a.to, dry_run),
