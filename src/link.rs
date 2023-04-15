@@ -1,7 +1,4 @@
-use std::{
-    fmt, io,
-    path::{Path, PathBuf},
-};
+use std::{fmt, io, path::PathBuf};
 
 use crate::expand;
 
@@ -32,20 +29,16 @@ impl From<expand::ExpandError> for LinkError {
     }
 }
 
-pub fn symlink(
-    from_dir: &PathBuf,
-    name: &String,
-    to: &String,
-    dry_run: bool,
-) -> Result<(), LinkError> {
-    println!("Linking '{name}' to '{to}'");
+pub fn symlink(from: &PathBuf, to: &PathBuf, dry_run: bool) -> Result<(), LinkError> {
+    println!(
+        "Linking '{}' to '{}'",
+        from.as_path().display(),
+        to.as_path().display()
+    );
 
     if dry_run {
         return Ok(());
     }
-
-    let from = PathBuf::from(from_dir).join(name);
-    let to = expand::expand_tilde(Path::new(to))?;
 
     std::os::unix::fs::symlink(from, to)?;
 

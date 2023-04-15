@@ -101,7 +101,7 @@ fn try_main() -> Result<(), CliError> {
         println!("Running in dry-run mode");
     }
 
-    preset.apply(pwd, args.dry_run)?;
+    preset.apply(&pwd, args.dry_run)?;
 
     Ok(())
 }
