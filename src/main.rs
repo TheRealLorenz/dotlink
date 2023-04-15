@@ -48,9 +48,7 @@ fn main() -> io::Result<()> {
         std::process::exit(0);
     });
 
-    #[cfg(debug_assertions)]
-    println!("Loaded preset: {preset:?}");
-
+    println!("Loaded preset: {}", args.preset);
     preset.apply(pwd)?;
 
     Ok(())
