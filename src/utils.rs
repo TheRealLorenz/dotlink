@@ -16,7 +16,7 @@ pub fn expand_tilde(path: &Path) -> PathBuf {
 }
 
 pub fn symlink(from_dir: &PathBuf, name: &String, to: &String, dry_run: bool) -> io::Result<()> {
-    println!("Symlinking '{name}' to '{to}'");
+    println!("Linking '{name}' to '{to}'");
 
     if dry_run {
         return Ok(())
