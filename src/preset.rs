@@ -1,12 +1,12 @@
+use crate::utils;
+use serde::Deserialize;
 use std::{
     collections::HashMap,
     fs, io,
     path::{Path, PathBuf},
 };
 
-use serde::Deserialize;
-
-use crate::utils;
+pub mod error;
 
 #[derive(Deserialize)]
 pub struct Presets {
@@ -35,11 +35,9 @@ struct CustomEntry {
 }
 
 impl Presets {
-    pub fn from_file(path: &dyn AsRef<Path>) -> io::Result<Self> {
+    pub fn from_file(path: &dyn AsRef<Path>) -> Result<Self, error::LoadError> {
         let file_content = fs::read_to_string(path)?;
-        let presets = toml::from_str::<Presets>(&file_content).unwrap_or_else(|err| {
-            panic!("Couldn't parse toml: {err}");
-        });
+        let presets = toml::from_str::<Presets>(&file_content)?;
 
         Ok(presets)
     }

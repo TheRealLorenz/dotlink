@@ -1,5 +1,5 @@
 use clap::Parser;
-use std::{env, io, path::PathBuf};
+use std::{env, fmt, io, path::PathBuf};
 
 mod preset;
 mod utils;
@@ -20,10 +20,37 @@ struct Args {
     file: Option<PathBuf>,
 
     #[arg(long)]
-    dry_run: bool
+    dry_run: bool,
 }
 
-fn main() -> io::Result<()> {
+#[derive(Debug)]
+enum CliError {
+    LoadError(preset::error::LoadError),
+    IoError(io::Error),
+}
+
+impl From<preset::error::LoadError> for CliError {
+    fn from(value: preset::error::LoadError) -> Self {
+        CliError::LoadError(value)
+    }
+}
+
+impl From<io::Error> for CliError {
+    fn from(value: io::Error) -> Self {
+        CliError::IoError(value)
+    }
+}
+
+impl fmt::Display for CliError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CliError::LoadError(e) => write!(f, "{e}"),
+            CliError::IoError(e) => write!(f, "{e}"),
+        }
+    }
+}
+
+fn try_main() -> Result<(), CliError> {
     let args = Args::parse();
 
     #[cfg(debug_assertions)]
@@ -60,4 +87,15 @@ fn main() -> io::Result<()> {
     preset.apply(pwd, args.dry_run)?;
 
     Ok(())
+}
+
+fn main() {
+    if let Err(e) = try_main() {
+        eprintln!("{e}");
+
+        #[cfg(debug_assertions)]
+        println!("Error: {e:#?}");
+
+        std::process::exit(1);
+    }
 }
