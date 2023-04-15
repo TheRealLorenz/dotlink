@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use colored::*;
 
 pub fn symlink(from: &PathBuf, to: &PathBuf, dry_run: bool) {
     print!(
@@ -13,10 +14,10 @@ pub fn symlink(from: &PathBuf, to: &PathBuf, dry_run: bool) {
     }
 
     match std::os::unix::fs::symlink(from, to) {
-        Ok(_) => println!("✓"),
+        Ok(_) => println!("{}", "✓".green().bold()),
         Err(e) => {
-            println!("X");
             println!("\t{e}")
+            println!("{}", "X".red().bold());
         }
     };
 }
