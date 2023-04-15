@@ -52,6 +52,11 @@ fn main() -> io::Result<()> {
     });
 
     println!("Loaded preset: {}", args.preset);
+
+    if args.dry_run {
+        println!("Running in dry-run mode");
+    }
+
     preset.apply(pwd, args.dry_run)?;
 
     Ok(())
