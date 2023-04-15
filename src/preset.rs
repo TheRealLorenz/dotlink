@@ -1,8 +1,8 @@
-use crate::utils;
+use crate::link;
 use serde::Deserialize;
 use std::{
     collections::HashMap,
-    fs, io,
+    fs,
     path::{Path, PathBuf},
 };
 
@@ -52,11 +52,11 @@ impl Presets {
 }
 
 impl Preset {
-    pub fn apply(&self, from_dir: PathBuf, dry_run: bool) -> io::Result<()> {
+    pub fn apply(&self, from_dir: PathBuf, dry_run: bool) -> Result<(), link::LinkError> {
         for entry in &self.links {
             match entry {
-                Entry::SimpleEntry(name) => utils::symlink(&from_dir, name, &self.to, dry_run),
-                Entry::CustomEntry(a) => utils::symlink(&from_dir, &a.name, &a.to, dry_run),
+                Entry::SimpleEntry(name) => link::symlink(&from_dir, name, &self.to, dry_run),
+                Entry::CustomEntry(a) => link::symlink(&from_dir, &a.name, &a.to, dry_run),
             }?;
         }
 

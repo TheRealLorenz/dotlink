@@ -1,6 +1,7 @@
 use clap::Parser;
-use std::{env, fmt, io, path::PathBuf};
+use std::{env, fmt, path::PathBuf, io};
 
+mod link;
 mod preset;
 mod utils;
 
@@ -25,27 +26,35 @@ struct Args {
 
 #[derive(Debug)]
 enum CliError {
-    LoadError(preset::error::LoadError),
-    IoError(io::Error),
+    Load(preset::error::LoadError),
+    Io(io::Error),
+    Link(link::LinkError),
 }
 
 impl From<preset::error::LoadError> for CliError {
     fn from(value: preset::error::LoadError) -> Self {
-        CliError::LoadError(value)
+        CliError::Load(value)
     }
 }
 
 impl From<io::Error> for CliError {
     fn from(value: io::Error) -> Self {
-        CliError::IoError(value)
+        CliError::Io(value)
+    }
+}
+
+impl From<link::LinkError> for CliError {
+    fn from(value: link::LinkError) -> Self {
+        CliError::Link(value)
     }
 }
 
 impl fmt::Display for CliError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            CliError::LoadError(e) => write!(f, "{e}"),
-            CliError::IoError(e) => write!(f, "{e}"),
+            CliError::Load(e) => write!(f, "{e}"),
+            CliError::Io(e) => write!(f, "{e}"),
+            CliError::Link(e) => write!(f, "{e}"),
         }
     }
 }
