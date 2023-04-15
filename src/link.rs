@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use colored::*;
+use std::{fs, path::PathBuf};
 
 pub fn symlink(from: &PathBuf, to: &PathBuf, dry_run: bool) {
     print!(
@@ -16,6 +16,14 @@ pub fn symlink(from: &PathBuf, to: &PathBuf, dry_run: bool) {
     match std::os::unix::fs::symlink(from, to) {
         Ok(_) => println!("{}", "✓".green().bold()),
         Err(e) => {
+            if e.kind() == std::io::ErrorKind::AlreadyExists
+                && fs::symlink_metadata(to).unwrap().is_symlink()
+                && &fs::read_link(to).unwrap() == from
+            {
+                println!("{}", "✓".green().bold());
+                return;
+            }
+
             println!("{}", "X".red().bold());
             eprintln!("  - {e}")
         }
