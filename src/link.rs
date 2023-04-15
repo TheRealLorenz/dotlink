@@ -1,20 +1,34 @@
-use std::{io, fmt, path::{PathBuf, Path}};
+use std::{
+    fmt, io,
+    path::{Path, PathBuf},
+};
 
-use crate::utils::expand_tilde;
-
+use crate::expand;
 
 #[derive(Debug)]
-pub struct LinkError(io::Error);
+pub enum LinkError {
+    Io(io::Error),
+    Expand(expand::ExpandError),
+}
 
 impl fmt::Display for LinkError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Couldn't link file: {}", self.0)
+        match self {
+            LinkError::Io(e) => write!(f, "Couldn't link file: {}", e),
+            LinkError::Expand(e) => write!(f, "Couldn't link file: {}", e),
+        }
     }
 }
 
 impl From<io::Error> for LinkError {
     fn from(value: io::Error) -> Self {
-        LinkError(value)
+        LinkError::Io(value)
+    }
+}
+
+impl From<expand::ExpandError> for LinkError {
+    fn from(value: expand::ExpandError) -> Self {
+        LinkError::Expand(value)
     }
 }
 
@@ -31,7 +45,7 @@ pub fn symlink(
     }
 
     let from = PathBuf::from(from_dir).join(name);
-    let to = expand_tilde(Path::new(to));
+    let to = expand::expand_tilde(Path::new(to))?;
 
     std::os::unix::fs::symlink(from, to)?;
 

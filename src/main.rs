@@ -1,9 +1,9 @@
 use clap::Parser;
-use std::{env, fmt, path::PathBuf, io};
+use std::{env, fmt, io, path::PathBuf};
 
+mod expand;
 mod link;
 mod preset;
-mod utils;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -29,6 +29,7 @@ enum CliError {
     Load(preset::error::LoadError),
     Io(io::Error),
     Link(link::LinkError),
+    Expand(expand::ExpandError),
 }
 
 impl From<preset::error::LoadError> for CliError {
@@ -49,12 +50,19 @@ impl From<link::LinkError> for CliError {
     }
 }
 
+impl From<expand::ExpandError> for CliError {
+    fn from(value: expand::ExpandError) -> Self {
+        CliError::Expand(value)
+    }
+}
+
 impl fmt::Display for CliError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             CliError::Load(e) => write!(f, "{e}"),
             CliError::Io(e) => write!(f, "{e}"),
             CliError::Link(e) => write!(f, "{e}"),
+            CliError::Expand(e) => write!(f, "{e}"),
         }
     }
 }
@@ -67,12 +75,12 @@ fn try_main() -> Result<(), CliError> {
 
     let pwd = args
         .path
-        .map(|path| utils::expand_tilde(&path).canonicalize())
-        .unwrap_or(env::current_dir())?;
+        .map(|path| expand::expand_path(&path))
+        .unwrap_or(env::current_dir().map_err(expand::ExpandError::Io))?;
 
     let config_file_path = args
         .file
-        .map(|path| utils::expand_tilde(&path).canonicalize())
+        .map(|path| expand::expand_path(&path))
         .unwrap_or_else(|| Ok(pwd.join("dotlink.toml")))?;
 
     let presets = preset::Presets::from_file(&config_file_path)?;
