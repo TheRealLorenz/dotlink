@@ -28,7 +28,6 @@ struct Args {
 enum CliError {
     Load(preset::error::LoadError),
     Io(io::Error),
-    Link(link::LinkError),
     Expand(expand::ExpandError),
 }
 
@@ -44,12 +43,6 @@ impl From<io::Error> for CliError {
     }
 }
 
-impl From<link::LinkError> for CliError {
-    fn from(value: link::LinkError) -> Self {
-        CliError::Link(value)
-    }
-}
-
 impl From<expand::ExpandError> for CliError {
     fn from(value: expand::ExpandError) -> Self {
         CliError::Expand(value)
@@ -61,7 +54,6 @@ impl fmt::Display for CliError {
         match self {
             CliError::Load(e) => write!(f, "{e}"),
             CliError::Io(e) => write!(f, "{e}"),
-            CliError::Link(e) => write!(f, "{e}"),
             CliError::Expand(e) => write!(f, "{e}"),
         }
     }
