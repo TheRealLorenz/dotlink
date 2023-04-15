@@ -1,5 +1,5 @@
 use clap::Parser;
-use std::{env, io, path::PathBuf};
+use std::{env, path::PathBuf};
 
 mod preset;
 mod utils;
@@ -20,10 +20,10 @@ struct Args {
     file: Option<PathBuf>,
 
     #[arg(long)]
-    dry_run: bool
+    dry_run: bool,
 }
 
-fn main() -> io::Result<()> {
+fn main() {
     let args = Args::parse();
 
     #[cfg(debug_assertions)]
@@ -31,15 +31,15 @@ fn main() -> io::Result<()> {
 
     let pwd = args
         .path
-        .map(|path| utils::expand_tilde(&path).canonicalize())
-        .unwrap_or(env::current_dir())?;
+        .map(|path| utils::expand_path(&path))
+        .unwrap_or(env::current_dir().expect("Invalid current directory"));
 
     let config_file_path = args
         .file
-        .map(|path| utils::expand_tilde(&path).canonicalize())
-        .unwrap_or_else(|| Ok(pwd.join("dotlink.toml")))?;
+        .map(|path| utils::expand_path(&path))
+        .unwrap_or_else(|| pwd.join("dotlink.toml"));
 
-    let presets = preset::Presets::from_file(&config_file_path)?;
+    let presets = preset::Presets::from_file(&config_file_path);
 
     if args.list_presets {
         println!("Available presets: {}", presets.names().join(", "));
@@ -57,7 +57,5 @@ fn main() -> io::Result<()> {
         println!("Running in dry-run mode");
     }
 
-    preset.apply(pwd, args.dry_run)?;
-
-    Ok(())
+    preset.apply(pwd, args.dry_run);
 }
