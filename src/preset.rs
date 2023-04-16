@@ -1,4 +1,5 @@
 use crate::{expand, link};
+use colored::*;
 use serde::Deserialize;
 use std::{
     collections::HashMap,
@@ -54,20 +55,39 @@ impl Presets {
 impl Preset {
     pub fn apply(&self, from_dir: &PathBuf, dry_run: bool) -> Result<(), expand::ExpandError> {
         for entry in &self.links {
-            match entry {
+            let (from, to) = match entry {
                 Entry::SimpleEntry(name) => {
                     let from = PathBuf::from(&from_dir).join(name);
                     let to = expand::expand_tilde(Path::new(&self.to))?.join(name);
 
-                    link::symlink(&from, &to, dry_run);
+                    Ok::<(_, _), expand::ExpandError>((from, to))
                 }
                 Entry::CustomEntry(a) => {
                     let from = PathBuf::from(&from_dir).join(&a.name);
                     let to = expand::expand_tilde(Path::new(&a.to))?;
 
-                    link::symlink(&from, &to, dry_run);
+                    Ok((from, to))
                 }
-            };
+            }?;
+
+            print!(
+                "Linking '{}' to '{}': ",
+                from.as_path().display(),
+                to.as_path().display()
+            );
+
+            if dry_run {
+                println!("dry");
+                continue;
+            }
+
+            match link::symlink(&from, &to) {
+                Ok(_) => println!("{}", "✓".green().bold()),
+                Err(e) => {
+                    println!("{}", "X".red().bold());
+                    eprintln!("  - {e}")
+                }
+            }
         }
 
         Ok(())
