@@ -1,4 +1,5 @@
 use clap::Parser;
+use colored::*;
 use std::{env, fmt, io, path::PathBuf};
 
 mod expand;
@@ -87,10 +88,10 @@ fn try_main() -> Result<(), CliError> {
         std::process::exit(0);
     });
 
-    println!("Loaded preset: {}", args.preset);
+    println!("Loaded preset: {}", args.preset.bold());
 
     if args.dry_run {
-        println!("Running in dry-run mode");
+        println!("Running in {}", "dry-run mode".yellow().bold());
     }
 
     preset.apply(&pwd, args.dry_run)?;

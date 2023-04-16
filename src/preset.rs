@@ -79,7 +79,7 @@ impl Preset {
             print!("Linking {}: ", link_entry);
 
             if dry_run {
-                println!("dry");
+                println!("{}", "dry".yellow().bold());
                 continue;
             }
 
