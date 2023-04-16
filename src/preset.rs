@@ -76,11 +76,7 @@ impl Preset {
         for entry in &self.links {
             let link_entry = entry.to_link_entry(from_dir, &self.to)?;
 
-            print!(
-                "Linking '{}' to '{}': ",
-                from.as_path().display(),
-                to.as_path().display()
-            );
+            print!("Linking {}: ", link_entry);
 
             if dry_run {
                 println!("dry");

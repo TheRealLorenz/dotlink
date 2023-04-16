@@ -5,6 +5,17 @@ pub struct LinkEntry {
     pub to: PathBuf,
 }
 
+impl fmt::Display for LinkEntry {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "({}) -> ({})",
+            self.from.as_path().display(),
+            self.to.as_path().display()
+        )
+    }
+}
+
 pub fn symlink(link_entry: &LinkEntry) -> Result<(), io::Error> {
     let from = &link_entry.from;
     let to = &link_entry.to;
