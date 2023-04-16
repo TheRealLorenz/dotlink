@@ -19,6 +19,7 @@ Supports multiple presets, in order to avoid linking every file in every machine
 - Manage linked files.
 - Force linking.
 - Windows support.
+- Publish to crates.io.
 
 ## Config file
 
