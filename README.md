@@ -21,6 +21,20 @@ Supports multiple presets, in order to avoid linking every file in every machine
 - Windows support.
 - Publish to crates.io.
 
+## A real life use case
+
+I've setup my own [dotfiles](https://github.com/TheRealLorenz/dotfiles.git) repo with a [dotlink.toml](https://github.com/TheRealLorenz/dotfiles/blob/main/dotlink.toml) file.
+
+In my case i simply clone the repo and run dotlink inside of it.
+
+```bash
+$ git clone https://github.com/TheRealLorenz/dotfiles.git
+$ cd dotfiles
+$ dotlink -p macOS
+```
+
+The program automatically picks up the config file inside the **current working directory** and links everything!
+
 ## Config file
 
 dotlink relies on a config file, named `dotlink.toml`.
