@@ -1,11 +1,7 @@
 use crate::{expand, link};
 use colored::*;
 use serde::Deserialize;
-use std::{
-    collections::HashMap,
-    fs,
-    path::{Path, PathBuf},
-};
+use std::{collections::HashMap, fs, path::Path};
 
 pub mod error;
 
@@ -35,6 +31,29 @@ struct CustomEntry {
     to: String,
 }
 
+impl Entry {
+    fn to_link_entry(
+        &self,
+        from_dir: &Path,
+        default_to: &String,
+    ) -> Result<link::LinkEntry, expand::ExpandError> {
+        match self {
+            Entry::SimpleEntry(name) => {
+                let from = from_dir.join(name);
+                let to = expand::expand_tilde(Path::new(default_to))?.join(name);
+
+                Ok(link::LinkEntry { from, to })
+            }
+            Entry::CustomEntry(a) => {
+                let from = from_dir.join(&a.name);
+                let to = expand::expand_tilde(Path::new(&a.to))?;
+
+                Ok(link::LinkEntry { from, to })
+            }
+        }
+    }
+}
+
 impl Presets {
     pub fn from_file(path: &dyn AsRef<Path>) -> Result<Self, error::LoadError> {
         let file_content = fs::read_to_string(path)?;
@@ -53,22 +72,9 @@ impl Presets {
 }
 
 impl Preset {
-    pub fn apply(&self, from_dir: &PathBuf, dry_run: bool) -> Result<(), expand::ExpandError> {
+    pub fn apply(&self, from_dir: &Path, dry_run: bool) -> Result<(), expand::ExpandError> {
         for entry in &self.links {
-            let (from, to) = match entry {
-                Entry::SimpleEntry(name) => {
-                    let from = PathBuf::from(&from_dir).join(name);
-                    let to = expand::expand_tilde(Path::new(&self.to))?.join(name);
-
-                    Ok::<(_, _), expand::ExpandError>((from, to))
-                }
-                Entry::CustomEntry(a) => {
-                    let from = PathBuf::from(&from_dir).join(&a.name);
-                    let to = expand::expand_tilde(Path::new(&a.to))?;
-
-                    Ok((from, to))
-                }
-            }?;
+            let link_entry = entry.to_link_entry(from_dir, &self.to)?;
 
             print!(
                 "Linking '{}' to '{}': ",
@@ -81,7 +87,7 @@ impl Preset {
                 continue;
             }
 
-            match link::symlink(&from, &to) {
+            match link::symlink(&link_entry) {
                 Ok(_) => println!("{}", "✓".green().bold()),
                 Err(e) => {
                     println!("{}", "X".red().bold());
