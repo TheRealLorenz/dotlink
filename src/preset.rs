@@ -83,7 +83,7 @@ impl Preset {
                 continue;
             }
 
-            match link::symlink(&link_entry) {
+            match link_entry.symlink() {
                 Ok(_) => println!("{}", "✓".green().bold()),
                 Err(e) => {
                     println!("{}", "X".red().bold());

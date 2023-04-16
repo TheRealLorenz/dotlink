@@ -16,20 +16,22 @@ impl fmt::Display for LinkEntry {
     }
 }
 
-pub fn symlink(link_entry: &LinkEntry) -> Result<(), io::Error> {
-    let from = &link_entry.from;
-    let to = &link_entry.to;
+impl LinkEntry {
+    pub fn symlink(&self) -> Result<(), io::Error> {
+        let from = &self.from;
+        let to = &self.to;
 
-    if let Err(e) = std::os::unix::fs::symlink(from, to) {
-        if e.kind() == std::io::ErrorKind::AlreadyExists
-            && fs::symlink_metadata(to).unwrap().is_symlink()
-            && &fs::read_link(to).unwrap() == from
-        {
-            return Ok(());
+        if let Err(e) = std::os::unix::fs::symlink(from, to) {
+            if e.kind() == std::io::ErrorKind::AlreadyExists
+                && fs::symlink_metadata(to).unwrap().is_symlink()
+                && &fs::read_link(to).unwrap() == from
+            {
+                return Ok(());
+            }
+
+            return Err(e);
         }
 
-        return Err(e);
+        Ok(())
     }
-
-    Ok(())
 }
