@@ -40,41 +40,61 @@ The program automatically picks up the config file inside the **current working 
 dotlink relies on a config file, named `dotlink.toml`.
 
 ```toml
-[presets.linux-wayland]
-to = '~/.config'
-links = [
+[[linux-wayland]]
+names = [
   'sway',
   'sov',
   'zsh',
   'nushell',
-  'waybar',
-  { name = 'rc.zsh', to = '~/.zshrc' },
-  { name = 'tmux.conf', to = '~/.tmux.conf' }
+  'waybar'
 ]
-
-[presets.linux-xorg]
 to = '~/.config'
-links = [
+
+[[linux-wayland]]
+name = 'rc.zsh'
+to = '~/.zshrc'
+
+[[linux-wayland]]
+name = 'tmux.conf'
+to = '~/.tmux.conf'
+
+[[linux-xorg]]
+names = [
   'i3',
   'polybar',
   'zsh',
-  'nushell',
-  { name = 'rc.zsh', to = '~/.zshrc' },
-  { name = 'tmux.conf', to = '~/.tmux.conf' }
+  'nushell'
 ]
-
-[presets.server]
 to = '~/.config'
-links = [ { name = 'tmux.conf', to = '~/.tmux.conf' } ]
 
-[presets.macOS]
+[[linux-xorg]]
+name = 'rc.zsh'
+to = '~/.zshrc' 
+
+[[linux-xorg]]
+name = 'tmux.conf'
+to = '~/.tmux.conf' 
+
+[[server]]
+name = 'tmux.conf'
+to = '~/.tmux.conf'
+
+[[macOS]]
+name = 'zsh'
 to = '~/.config'
-links = [
-  'zsh',
-  { name = 'rc.zsh', to = '~/.zshrc' },
-  { name = 'tmux.conf', to = '~/.tmux.conf' },
-  { name = 'nushell', to = '~/Application Support' }
-]
+
+[[macOS]]
+name = 'rc.zsh'
+to = '~/.zshrc'
+
+[[macOS]]
+name = 'tmux.conf'
+to = '~/.tmux.conf'
+
+[[macOS]]
+name = 'nushell'
+to = '~/Application Support'
+
 ```
 
 The example above defines 4 **presets**: **linux-wayland**, **linux-xorg**, **server**, **macOS**.
