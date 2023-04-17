@@ -41,7 +41,7 @@ impl LinkEntry {
             return;
         }
 
-        match symlink(&self.to, &self.from) {
+        match symlink(&self.from, &self.to) {
             Ok(_) => println!("{}", "✓".green().bold()),
             Err(e) => {
                 println!("{}", "X".red().bold());
