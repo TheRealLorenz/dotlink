@@ -32,8 +32,7 @@ impl Preset {
             match entry {
                 Entry::Single(single_entry) => {
                     let from = from_dir.join(&single_entry.name);
-                    let to =
-                        expand::expand_tilde(Path::new(&single_entry.to))?.join(&single_entry.name);
+                    let to = expand::expand_tilde(Path::new(&single_entry.to))?;
 
                     LinkEntry { from, to }.symlink(dry_run);
                 }
