@@ -1,17 +1,16 @@
-[presets.base]
-links = [
-  "zsh",
-  "foot",
-  "sway",
-  "mako",
-  { name = "tmux.conf", to = "~/.tmux.conf" }
-]
+[[default]]
+names = ["zsh", "foot", "sway", "mako"]
 to = "~/.config"
 
-[presets.macOS]
-links = [
-  "zsh",
-  "foot",
-  { name = "tmux.conf", to = "~/.tmux.conf" }
-]
+[[default]]
+name = "tmux.conf"
+to = "~/.tmux.conf"
+
+
+[[macOS]]
+names = ["zsh", "foot"]
 to = "~/.config"
+
+[[macOS]]
+name = "tmux.conf"
+to = "~/.tmux.conf"
