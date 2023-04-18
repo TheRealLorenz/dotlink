@@ -1,5 +1,9 @@
 use colored::*;
-use std::{fmt, fs, io, path::{PathBuf, Path}};
+use std::{
+    fmt, fs,
+    io::{self, ErrorKind},
+    path::{Path, PathBuf},
+};
 
 pub struct LinkEntry {
     pub from: PathBuf,
@@ -37,16 +41,44 @@ enum LinkSuccess {
     AlreadyLinked,
 }
 
-fn symlink(from: &PathBuf, to: &PathBuf) -> Result<LinkSuccess, io::Error> {
-    if let Err(e) = std::os::unix::fs::symlink(from, to) {
-        if e.kind() == std::io::ErrorKind::AlreadyExists
-            && to.is_symlink()?
-            && to.resolves_to(from)?
-        {
-            return Ok(LinkSuccess::AlreadyLinked);
-        }
+enum LinkError {
+    SourceNotFound,
+    DestinationExists,
+    Io(io::Error),
+}
 
-        return Err(e);
+impl fmt::Display for LinkError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            LinkError::SourceNotFound => write!(f, "source doesn't exist"),
+            LinkError::DestinationExists => write!(f, "destination already exists"),
+            LinkError::Io(e) => write!(f, "{e}"),
+        }
+    }
+}
+
+impl From<io::Error> for LinkError {
+    fn from(value: io::Error) -> Self {
+        LinkError::Io(value)
+    }
+}
+
+fn symlink(from: &PathBuf, to: &PathBuf) -> Result<LinkSuccess, LinkError> {
+    if !from.exists() {
+        return Err(LinkError::SourceNotFound);
+    }
+
+    if let Err(e) = std::os::unix::fs::symlink(from, to) {
+        return match e.kind() {
+            ErrorKind::AlreadyExists => {
+                if !to.is_symlink()? || !to.resolves_to(from)? {
+                    return Err(LinkError::DestinationExists);
+                }
+
+                return Ok(LinkSuccess::AlreadyLinked);
+            }
+            _ => Err(LinkError::Io(e)),
+        };
     }
 
     Ok(LinkSuccess::Linked)
