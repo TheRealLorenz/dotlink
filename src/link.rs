@@ -1,5 +1,5 @@
 use colored::*;
-use std::{fmt, fs, io, path::PathBuf};
+use std::{fmt, fs, io, path::{PathBuf, Path}};
 
 pub struct LinkEntry {
     pub from: PathBuf,
@@ -17,6 +17,21 @@ impl fmt::Display for LinkEntry {
     }
 }
 
+trait Symlink {
+    fn resolves_to(&self, to: &Path) -> io::Result<bool>;
+    fn is_symlink(&self) -> io::Result<bool>;
+}
+
+impl Symlink for PathBuf {
+    fn resolves_to(&self, destination: &Path) -> io::Result<bool> {
+        Ok(fs::read_link(self)? == destination)
+    }
+
+    fn is_symlink(&self) -> io::Result<bool> {
+        Ok(fs::symlink_metadata(self)?.is_symlink())
+    }
+}
+
 enum LinkSuccess {
     Linked,
     AlreadyLinked,
@@ -25,8 +40,8 @@ enum LinkSuccess {
 fn symlink(from: &PathBuf, to: &PathBuf) -> Result<LinkSuccess, io::Error> {
     if let Err(e) = std::os::unix::fs::symlink(from, to) {
         if e.kind() == std::io::ErrorKind::AlreadyExists
-            && fs::symlink_metadata(to).unwrap().is_symlink()
-            && &fs::read_link(to).unwrap() == from
+            && to.is_symlink()?
+            && to.resolves_to(from)?
         {
             return Ok(LinkSuccess::AlreadyLinked);
         }
