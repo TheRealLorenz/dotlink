@@ -94,7 +94,7 @@ impl LinkEntry {
         }
 
         match symlink(&self.from, &self.to) {
-            Ok(LinkSuccess::Linked) => println!("{}", "✓".green().bold()),
+            Ok(LinkSuccess::Linked) => println!("{}", "✓ - linked".green().bold()),
             Ok(LinkSuccess::AlreadyLinked) => println!("{}", "✓ - already linked".yellow().bold()),
             Err(e) => println!("{}", format!("X - {}", e).red().bold()),
         }
