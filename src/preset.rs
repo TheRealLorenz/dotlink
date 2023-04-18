@@ -66,6 +66,7 @@ impl Presets {
         match extension {
             "toml" => Self::from_toml(path),
             "yaml" => Self::from_yaml(path),
+            "json" => Self::from_json(path),
             _ => Err(error::LoadError::InvalidExtension),
         }
     }
@@ -73,6 +74,13 @@ impl Presets {
     fn from_toml(path: &dyn AsRef<Path>) -> Result<Self, error::LoadError> {
         let file_content = fs::read_to_string(path)?;
         let presets = toml::from_str::<Presets>(&file_content)?;
+
+        Ok(presets)
+    }
+
+    fn from_json(path: &dyn AsRef<Path>) -> Result<Self, error::LoadError> {
+        let file_content = fs::read_to_string(path)?;
+        let presets = serde_json::from_str::<Presets>(&file_content)?;
 
         Ok(presets)
     }

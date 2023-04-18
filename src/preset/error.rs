@@ -3,6 +3,7 @@ use std::{fmt, io};
 #[derive(Debug)]
 pub enum ParseError {
     Toml(toml::de::Error),
+    Json(serde_json::error::Error),
     Yaml(serde_yaml::Error),
 }
 
@@ -29,6 +30,12 @@ impl From<io::Error> for LoadError {
 impl From<toml::de::Error> for LoadError {
     fn from(value: toml::de::Error) -> Self {
         LoadError::Parse(ParseError::Toml(value))
+    }
+}
+
+impl From<serde_json::error::Error> for LoadError {
+    fn from(value: serde_json::error::Error) -> Self {
+        LoadError::Parse(ParseError::Json(value))
     }
 }
 

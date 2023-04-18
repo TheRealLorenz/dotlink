@@ -1,0 +1,23 @@
+{
+  "default": [
+    {
+      "names": ["zsh", "foot", "sway", "mako"],
+      "to": "~/.config"
+    },
+    {
+      "name": "tmux.conf",
+      "to": "~/.tmux.conf"
+    }
+  ],
+
+  "macOS": [
+    {
+      "names": ["zsh", "foot"],
+      "to": "~/.config"
+    },
+    {
+      "name": "tmux.conf",
+      "to": "~/.tmux.conf"
+    }
+  ]
+}
