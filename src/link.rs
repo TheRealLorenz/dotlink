@@ -10,7 +10,7 @@ impl fmt::Display for LinkEntry {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "({}) -> ({})",
+            "'{}' -> '{}'",
             self.from.file_name().unwrap().to_str().unwrap(),
             self.to.as_path().display()
         )
