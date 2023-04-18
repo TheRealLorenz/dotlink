@@ -1,4 +1,4 @@
-use std::{error, fmt, io};
+use std::{fmt, io};
 
 #[derive(Debug)]
 pub enum LoadError {
@@ -23,15 +23,6 @@ impl fmt::Display for LoadError {
         match self {
             LoadError::Read(e) => write!(f, "Couldn't read config file: {e}"),
             LoadError::Parse(e) => write!(f, "Couldn't parse config file: {e}"),
-        }
-    }
-}
-
-impl error::Error for LoadError {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        match self {
-            LoadError::Read(e) => Some(e),
-            LoadError::Parse(e) => Some(e),
         }
     }
 }
