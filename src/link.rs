@@ -11,7 +11,7 @@ impl fmt::Display for LinkEntry {
         write!(
             f,
             "({}) -> ({})",
-            self.from.as_path().display(),
+            self.from.file_name().unwrap().to_str().unwrap(),
             self.to.as_path().display()
         )
     }
