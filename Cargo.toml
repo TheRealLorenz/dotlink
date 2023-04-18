@@ -9,5 +9,6 @@ edition = "2021"
 toml = "0.7.3"
 directories = "5.0.0"
 colored = "2.0.0"
+serde_yaml = "0.9.21"
 clap = { version = "4.1.8", features = ["derive"] }
 serde = { version = "1.0", features = ["derive"] }
