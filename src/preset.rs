@@ -56,6 +56,20 @@ pub struct Presets(HashMap<String, Preset>);
 
 impl Presets {
     pub fn from_file(path: &dyn AsRef<Path>) -> Result<Self, error::LoadError> {
+        let extension = path
+            .as_ref()
+            .extension()
+            .ok_or(error::LoadError::InvalidExtension)?
+            .to_str()
+            .unwrap();
+
+        match extension {
+            "toml" => Self::from_toml(path),
+            _ => Err(error::LoadError::InvalidExtension),
+        }
+    }
+
+    fn from_toml(path: &dyn AsRef<Path>) -> Result<Self, error::LoadError> {
         let file_content = fs::read_to_string(path)?;
         let presets = toml::from_str::<Presets>(&file_content)?;
 

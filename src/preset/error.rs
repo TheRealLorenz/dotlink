@@ -4,6 +4,7 @@ use std::{fmt, io};
 pub enum LoadError {
     Read(io::Error),
     Parse(toml::de::Error),
+    InvalidExtension,
 }
 
 impl From<io::Error> for LoadError {
@@ -23,6 +24,7 @@ impl fmt::Display for LoadError {
         match self {
             LoadError::Read(e) => write!(f, "Couldn't read config file: {e}"),
             LoadError::Parse(e) => write!(f, "Couldn't parse config file: {e}"),
+            LoadError::InvalidExtension => write!(f, "Invalid config file extension"),
         }
     }
 }
