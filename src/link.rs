@@ -17,19 +17,24 @@ impl fmt::Display for LinkEntry {
     }
 }
 
-fn symlink(from: &PathBuf, to: &PathBuf) -> Result<(), io::Error> {
+enum LinkSuccess {
+    Linked,
+    AlreadyLinked,
+}
+
+fn symlink(from: &PathBuf, to: &PathBuf) -> Result<LinkSuccess, io::Error> {
     if let Err(e) = std::os::unix::fs::symlink(from, to) {
         if e.kind() == std::io::ErrorKind::AlreadyExists
             && fs::symlink_metadata(to).unwrap().is_symlink()
             && &fs::read_link(to).unwrap() == from
         {
-            return Ok(());
+            return Ok(LinkSuccess::AlreadyLinked);
         }
 
         return Err(e);
     }
 
-    Ok(())
+    Ok(LinkSuccess::Linked)
 }
 
 impl LinkEntry {
@@ -42,11 +47,9 @@ impl LinkEntry {
         }
 
         match symlink(&self.from, &self.to) {
-            Ok(_) => println!("{}", "✓".green().bold()),
-            Err(e) => {
-                println!("{}", "X".red().bold());
-                eprintln!("  - {e}")
-            }
+            Ok(LinkSuccess::Linked) => println!("{}", "✓".green().bold()),
+            Ok(LinkSuccess::AlreadyLinked) => println!("{}", "✓ - already linked".yellow().bold()),
+            Err(e) => println!("{}", format!("X - {}", e).red().bold()),
         }
     }
 }

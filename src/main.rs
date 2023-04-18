@@ -91,7 +91,7 @@ fn try_main() -> Result<(), CliError> {
     println!("Loaded preset: {}", args.preset.bold());
 
     if args.dry_run {
-        println!("Running in {}", "dry-run mode".yellow().bold());
+        println!("Running in {} mode", "dry-run".yellow().bold());
     }
 
     preset.apply(&pwd, args.dry_run)?;
