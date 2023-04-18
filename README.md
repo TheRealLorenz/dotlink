@@ -9,19 +9,12 @@ Supports multiple presets, in order to avoid linking every file in every machine
 
 ## Features!
 
-- Ability to have multiple presets for different machines.
-- Simple TOML configuration file.
+- **Simple** TOML configuration file.
+- Ability to have **multiple presets** for different machines.
 - Doesn't overwrite links or files.
 - If a link alreay exists, checks if it points to the right file.
 
-## Planned features
-
-- Manage linked files.
-- Force linking.
-- Windows support.
-- Publish to crates.io.
-
-## A real life use case
+## A real life use case (simplicity showcase)
 
 I've setup my own [dotfiles](https://github.com/TheRealLorenz/dotfiles.git) repo with a [dotlink.toml](https://github.com/TheRealLorenz/dotfiles/blob/main/dotlink.toml) file.
 
@@ -35,9 +28,33 @@ $ dotlink -p macOS
 
 The program automatically picks up the config file inside the **current working directory** and links everything!
 
-## Config file
+## How does it work?
 
 dotlink relies on a config file, named `dotlink.toml`.
+
+In the config file you can specify multiple presets, where every presets is a vector for entries.
+
+Presets are top level keys of the config file.
+
+There are two types of entries:
+
+- Simple entries:
+```toml
+[[preset_name]]
+name = 'foo'                  # File name
+to = '/path/to/destination'   # Destination path
+```
+
+- Multiple entries:
+```toml
+[[preset_name]]
+names = [ 'foo', 'bar', 'baz' ] # Multiple file names
+to = '/path/to/destination/'    # Destination path
+```
+
+The program than simply symlinks every file specified by `name` or `names` to the corresponding `to`.
+
+### Presets example
 
 ```toml
 [[linux-wayland]]
@@ -98,16 +115,8 @@ to = '~/Application Support'
 ```
 
 The example above defines 4 **presets**: **linux-wayland**, **linux-xorg**, **server**, **macOS**.
-
-Each **preset** has 2 main fields: 
-  - `to`: a string which represents the dir that simple entries will be linked to.
-  - `links`: an array of entries.
   
-  > #### Types of entries
-  > - Simple entry: a string which represents the name of the entry.
-  > - Custom entry: an object which contains the name of the entry and the custom link location.
-  
-## Using
+## Usage
 
 Running `dotlink -h` will show the help message
 ```
@@ -140,3 +149,10 @@ Install with [Cargo](https://docs.rs/cargo/latest/cargo/)
 ```bash
 $ cargo install --path dotlink
 ```
+
+## Planned features
+
+- Manage linked files.
+- Force linking.
+- Windows support.
+- Publish to crates.io.
