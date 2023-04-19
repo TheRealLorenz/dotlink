@@ -4,13 +4,11 @@ A simple program that can help you link all your dotfiles in place.
 
 Supports multiple presets, in order to avoid linking every file in every machine.
 
-> **Warning**
-> UNIX only (for now)
-
 ## Features!
 
 - **Simple** TOML configuration file.
 - Ability to have **multiple presets** for different machines.
+- **Cross-Platform** (Unix and Windows).
 - Doesn't overwrite links or files.
 - If a link alreay exists, checks if it points to the right file.
 
@@ -154,5 +152,4 @@ $ cargo install --path dotlink
 
 - Manage linked files.
 - Force linking.
-- Windows support.
 - Publish to crates.io.
