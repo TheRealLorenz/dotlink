@@ -23,16 +23,11 @@ impl fmt::Display for LinkEntry {
 
 trait Symlink {
     fn resolves_to(&self, to: &Path) -> io::Result<bool>;
-    fn is_symlink(&self) -> io::Result<bool>;
 }
 
-impl Symlink for PathBuf {
+impl<T: AsRef<Path>> Symlink for T {
     fn resolves_to(&self, destination: &Path) -> io::Result<bool> {
         Ok(fs::read_link(self)? == destination)
-    }
-
-    fn is_symlink(&self) -> io::Result<bool> {
-        Ok(fs::symlink_metadata(self)?.is_symlink())
     }
 }
 
@@ -63,15 +58,29 @@ impl From<io::Error> for LinkError {
     }
 }
 
-fn symlink(from: &PathBuf, to: &PathBuf) -> Result<LinkSuccess, LinkError> {
+#[cfg(target_family = "unix")]
+fn os_symlink() -> io::Result<()> {
+    std::os::unix::fs::symlink(from, to)
+}
+
+#[cfg(target_family = "windows")]
+fn os_symlink(from: &dyn AsRef<Path>, to: &dyn AsRef<Path>) -> io::Result<()> {
+    if from.as_ref().is_dir() {
+        return std::os::windows::fs::symlink_dir(from, to)
+    }
+
+    std::os::windows::fs::symlink_file(from, to)
+}
+
+fn symlink(from: &Path, to: &Path) -> Result<LinkSuccess, LinkError> {
     if !from.exists() {
         return Err(LinkError::SourceNotFound);
     }
 
-    if let Err(e) = std::os::unix::fs::symlink(from, to) {
+    if let Err(e) = os_symlink(&from, &to) {
         return match e.kind() {
             ErrorKind::AlreadyExists => {
-                if !to.is_symlink()? || !to.resolves_to(from)? {
+                if !to.is_symlink() || !to.resolves_to(from)? {
                     return Err(LinkError::DestinationExists);
                 }
 
