@@ -4,7 +4,8 @@ to = "~/.config"
 
 [[default]]
 name = "tmux.conf"
-to = "~/.tmux.conf"
+to = "~/"
+rename = ".tmux.conf"
 
 
 [[macOS]]
@@ -13,4 +14,5 @@ to = "~/.config"
 
 [[macOS]]
 name = "tmux.conf"
-to = "~/.tmux.conf"
+to = "~/"
+rename = ".tmux.conf"
