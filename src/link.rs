@@ -59,7 +59,7 @@ impl From<io::Error> for LinkError {
 }
 
 #[cfg(target_family = "unix")]
-fn os_symlink() -> io::Result<()> {
+fn os_symlink(from: &dyn AsRef<Path>, to: &dyn AsRef<Path>) -> io::Result<()> {
     std::os::unix::fs::symlink(from, to)
 }
 
