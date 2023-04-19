@@ -50,7 +50,7 @@ rename = 'foo2'               # Link name (optional, defaults to the file name)
 ```toml
 [[preset_name]]
 names = [ 'foo', 'bar', 'baz' ] # Multiple file names
-to = '/path/to/destination'    # Destination path
+to = '/path/to/destination'     # Destination directory
 ```
 
 The program than simply symlinks every file specified by `name` or `names` to the corresponding `to`.
