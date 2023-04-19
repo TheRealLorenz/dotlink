@@ -12,6 +12,7 @@ pub mod error;
 struct SingleEntry {
     name: String,
     to: String,
+    rename: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -36,7 +37,15 @@ impl Preset {
             match entry {
                 Entry::Single(single_entry) => {
                     let from = from_dir.join(&single_entry.name);
-                    let to = expand::expand_tilde(Path::new(&single_entry.to))?;
+                    let to = expand::expand_tilde(
+                        &Path::new(&single_entry.to).join(
+                            single_entry
+                                .rename
+                                .clone()
+                                .unwrap_or(single_entry.name.clone()),
+                            // Maybe .clone() could be removed
+                        ),
+                    )?;
 
                     LinkEntry { from, to }.symlink(dry_run);
                 }

@@ -32,7 +32,7 @@ The program automatically picks up the config file inside the **current working 
 
 dotlink relies on a config file, named `dotlink.toml`, `dotlink.yaml` or `dotlink.json`.
 
-In the config file you can specify multiple presets, where every presets is a vector for entries.
+In the config file you can specify multiple presets, where every presets is a vector of entries.
 
 Presets are top level keys of the config file.
 
@@ -42,19 +42,22 @@ There are two types of entries:
 ```toml
 [[preset_name]]
 name = 'foo'                        # File name
-to = '/path/to/destination'         # Destination path
+to = '/path/to/destination'         # Destination directory
+rename = 'foo2'                     # Link name (optional, defaults to the file name)
 ```
 ```yaml
 preset_name:
   - name: 'foo'                     # File name
-    to: '/path/to/destination'      # Destination path
+    to: '/path/to/destination'      # Destination directory
+    rename: 'foo2'                  # Link name (optional, defaults to the file name)
 ```
 ```jsonc
 {
   "preset_name": [
     {
       "name": "foo",                // File name
-      "to": "/path/to/destination"  // Destination path
+      "to": "/path/to/destination", // Destination directory
+      "rename": "foo2"              // Link name (optional, defaults to the file name)
     }
   ]
 }
@@ -64,19 +67,19 @@ preset_name:
 ```toml
 [[preset_name]]
 names = [ 'foo', 'bar', 'baz' ]         # Multiple file names
-to = '/path/to/destination/'            # Destination path
+to = '/path/to/destination/'            # Destination directory
 ```
 ```yaml
 preset_name:
   - names: [ 'foo', 'bar', 'baz' ]      # Multiple file names
-    to: '/path/to/destination/'         # Destination path
+    to: '/path/to/destination/'         # Destination directory
 ```
 ```jsonc
 {
   "preset_name": [
     {
       "names": [ "foo", "bar", "baz" ], // Multiple file names
-      "to": "/path/to/destination/"     // Destination path
+      "to": "/path/to/destination/"     // Destination directory
     }
   ]
 }
@@ -99,11 +102,13 @@ to = '~/.config'
 
 [[linux-wayland]]
 name = 'rc.zsh'
-to = '~/.zshrc'
+to = '~/'
+rename = '.zshrc'
 
 [[linux-wayland]]
 name = 'tmux.conf'
-to = '~/.tmux.conf'
+to = '~/'
+rename = '.tmux.conf'
 
 [[linux-xorg]]
 names = [
@@ -116,15 +121,18 @@ to = '~/.config'
 
 [[linux-xorg]]
 name = 'rc.zsh'
-to = '~/.zshrc' 
+to = '~/'
+rename = '.zshrc'
 
 [[linux-xorg]]
 name = 'tmux.conf'
-to = '~/.tmux.conf' 
+to = '~/'
+rename = '.tmux.conf' 
 
 [[server]]
 name = 'tmux.conf'
-to = '~/.tmux.conf'
+to = '~/'
+rename = '.tmux.conf'
 
 [[macOS]]
 name = 'zsh'
@@ -132,11 +140,13 @@ to = '~/.config'
 
 [[macOS]]
 name = 'rc.zsh'
-to = '~/.zshrc'
+to = '~/'
+rename = '.zshrc'
 
 [[macOS]]
 name = 'tmux.conf'
-to = '~/.tmux.conf'
+to = '~/'
+rename = '.tmux.conf'
 
 [[macOS]]
 name = 'nushell'
