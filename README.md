@@ -190,6 +190,8 @@ $ cargo install --path dotlink
 
 ## Planned features
 
+- Tests.
+- Automated tests.
 - Manage linked files.
 - Force linking.
 - Publish to crates.io.
