@@ -71,12 +71,11 @@ fn try_main() -> Result<(), CliError> {
         .map(|path| expand::expand_path(&path))
         .unwrap_or(env::current_dir().map_err(expand::ExpandError::Io))?;
 
-    let config_file_path = args
-        .file
-        .map(|path| expand::expand_path(&path))
-        .unwrap_or_else(|| Ok(pwd.join("dotlink.toml")))?;
-
-    let presets = preset::Presets::from_file(&config_file_path)?;
+    let presets = if let Some(file_path) = args.file {
+        preset::Presets::from_path(&expand::expand_path(&file_path)?)
+    } else {
+        preset::Presets::from_path(&pwd)
+    }?;
 
     if args.list_presets {
         println!("Available presets: {}", presets.names().join(", "));

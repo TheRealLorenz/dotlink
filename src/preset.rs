@@ -1,6 +1,10 @@
 use crate::{expand, link::LinkEntry};
 use serde::Deserialize;
-use std::{collections::HashMap, fs, path::Path};
+use std::{
+    collections::HashMap,
+    fs, io,
+    path::{Path, PathBuf},
+};
 
 pub mod error;
 
@@ -64,9 +68,68 @@ impl Preset {
 pub struct Presets(HashMap<String, Preset>);
 
 impl Presets {
-    pub fn from_file(path: &dyn AsRef<Path>) -> Result<Self, error::LoadError> {
+    fn get_config_file_name(path: &dyn AsRef<Path>) -> Option<PathBuf> {
+        path.as_ref()
+            .read_dir()
+            .ok()?
+            .into_iter()
+            .filter_map(|entry| {
+                if let Ok(entry) = entry {
+                    return Some(entry.path());
+                }
+                None
+            })
+            .find(|entry| {
+                if let Some(file_name) = entry.file_name() {
+                    return ["dotlink.toml", "dotlink.yaml", "dotlink.json"]
+                        .contains(&file_name.to_str().unwrap());
+                }
+
+                false
+            })
+    }
+
+    pub fn from_path(path: &dyn AsRef<Path>) -> Result<Self, error::LoadError> {
+        let path = if path.as_ref().is_dir() {
+            Self::get_config_file_name(path).ok_or(io::Error::new(
+                io::ErrorKind::NotFound,
+                "config file not found",
+            ))?
+        } else {
+            PathBuf::from(path.as_ref())
+        };
+
+        let extension = path
+            .extension()
+            .ok_or(error::LoadError::InvalidExtension)?
+            .to_str()
+            .unwrap();
+
+        match extension {
+            "toml" => Self::from_toml(&path),
+            "yaml" => Self::from_yaml(&path),
+            "json" => Self::from_json(&path),
+            _ => Err(error::LoadError::InvalidExtension),
+        }
+    }
+
+    fn from_toml(path: &dyn AsRef<Path>) -> Result<Self, error::LoadError> {
         let file_content = fs::read_to_string(path)?;
         let presets = toml::from_str::<Presets>(&file_content)?;
+
+        Ok(presets)
+    }
+
+    fn from_json(path: &dyn AsRef<Path>) -> Result<Self, error::LoadError> {
+        let file_content = fs::read_to_string(path)?;
+        let presets = serde_json::from_str::<Presets>(&file_content)?;
+
+        Ok(presets)
+    }
+
+    fn from_yaml(path: &dyn AsRef<Path>) -> Result<Self, error::LoadError> {
+        let file_content = fs::read_to_string(path)?;
+        let presets = serde_yaml::from_str::<Presets>(&file_content)?;
 
         Ok(presets)
     }
