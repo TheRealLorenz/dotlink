@@ -72,7 +72,6 @@ impl Presets {
         path.as_ref()
             .read_dir()
             .ok()?
-            .into_iter()
             .filter_map(|entry| {
                 if let Ok(entry) = entry {
                     return Some(entry.path());
