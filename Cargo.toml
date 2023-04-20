@@ -2,6 +2,15 @@
 name = "dotlink"
 version = "0.1.0"
 edition = "2021"
+license-file = "LICENSE"
+description = "No non-sense dotfiles linker"
+repository = "https://github.com/TheRealLorenz/dotlink"
+readme = "README.md"
+keywords = ["dotfiles", "link", "symlink", "management"]
+categories = ["command-line-utilities", "config", "filesystem"]
+exclude = [
+  "dotlink.example.*",
+]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
