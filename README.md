@@ -194,4 +194,3 @@ $ cargo install --path dotlink
 - Automated tests.
 - Manage linked files.
 - Force linking.
-- Publish to crates.io.
