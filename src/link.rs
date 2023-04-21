@@ -31,11 +31,13 @@ impl<T: AsRef<Path>> Symlink for T {
     }
 }
 
+#[derive(Debug, PartialEq)]
 enum LinkSuccess {
     Linked,
     AlreadyLinked,
 }
 
+#[derive(Debug)]
 enum LinkError {
     SourceNotFound,
     DestinationExists,
@@ -113,5 +115,52 @@ impl LinkEntry {
             Ok(LinkSuccess::AlreadyLinked) => println!("{}", "✓ - already linked".yellow().bold()),
             Err(e) => println!("{}", format!("X - {}", e).red().bold()),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use tempfile::tempdir;
+
+    use super::*;
+    use std::fs::File;
+
+    #[test]
+    fn symlink_linked() -> Result<(), LinkError> {
+        let dir = tempdir()?;
+        File::create(dir.path().join("file"))?;
+
+        assert_eq!(
+            symlink(&dir.path().join("file"), &dir.path().join("file2"))?,
+            LinkSuccess::Linked
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn symlink_already_linked() -> Result<(), LinkError> {
+        let dir = tempdir()?;
+        File::create(dir.path().join("file"))?;
+        symlink(&dir.path().join("file"), &dir.path().join("file2"))?;
+
+        assert_eq!(
+            symlink(&dir.path().join("file"), &dir.path().join("file2"))?,
+            LinkSuccess::AlreadyLinked
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn symlink_source_not_found() -> io::Result<()> {
+        let dir = tempdir()?;
+
+        assert!(matches!(
+            symlink(&dir.path().join("file"), &dir.path().join("file2")),
+            Err(LinkError::SourceNotFound)
+        ));
+
+        Ok(())
     }
 }
