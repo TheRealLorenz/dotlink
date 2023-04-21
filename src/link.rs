@@ -126,27 +126,27 @@ mod tests {
     use std::fs::File;
 
     #[test]
-    fn symlink_linked() -> Result<(), LinkError> {
+    fn symlink_linked() -> io::Result<()> {
         let dir = tempdir()?;
         File::create(dir.path().join("file"))?;
 
         assert!(matches!(
-            symlink(&dir.path().join("file"), &dir.path().join("file2"))?,
-            LinkSuccess::Linked
+            symlink(&dir.path().join("file"), &dir.path().join("file2")),
+            Ok(LinkSuccess::Linked)
         ));
 
         Ok(())
     }
 
     #[test]
-    fn symlink_already_linked() -> Result<(), LinkError> {
+    fn symlink_already_linked() -> io::Result<()> {
         let dir = tempdir()?;
         File::create(dir.path().join("file"))?;
-        symlink(&dir.path().join("file"), &dir.path().join("file2"))?;
+        os_symlink(&dir.path().join("file"), &dir.path().join("file2"))?;
 
         assert!(matches!(
-            symlink(&dir.path().join("file"), &dir.path().join("file2"))?,
-            LinkSuccess::AlreadyLinked
+            symlink(&dir.path().join("file"), &dir.path().join("file2")),
+            Ok(LinkSuccess::AlreadyLinked)
         ));
 
         Ok(())
