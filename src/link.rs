@@ -74,6 +74,26 @@ fn os_symlink(from: &dyn AsRef<Path>, to: &dyn AsRef<Path>) -> io::Result<()> {
     std::os::windows::fs::symlink_file(from, to)
 }
 
+fn symlink_dry(from: &Path, to: &Path) -> Result<LinkSuccess, LinkError> {
+    if !from.exists() {
+        return Err(LinkError::SourceNotFound);
+    }
+
+    if !to.parent().map(|parent| parent.exists()).unwrap_or(false) {
+        return Err(LinkError::DestinationDirectoryNotFound);
+    }
+
+    if to.exists() {
+        if !to.is_symlink() || !to.resolves_to(from)? {
+            return Err(LinkError::DestinationExists);
+        }
+
+        return Ok(LinkSuccess::AlreadyLinked);
+    }
+
+    Ok(LinkSuccess::Linked)
+}
+
 fn symlink(from: &Path, to: &Path) -> Result<LinkSuccess, LinkError> {
     if !from.exists() {
         return Err(LinkError::SourceNotFound);
@@ -104,7 +124,13 @@ impl LinkEntry {
         print!("Linking {}: ", self);
 
         if dry_run {
-            println!("{}", "dry".yellow().bold());
+            match symlink_dry(&self.from, &self.to) {
+                Ok(LinkSuccess::Linked) => println!("{}", "✓ - ok to link".green().bold()),
+                Ok(LinkSuccess::AlreadyLinked) => {
+                    println!("{}", "✓ - already linked".yellow().bold())
+                }
+                Err(e) => println!("{}", format!("X - {}", e).red().bold()),
+            }
             return;
         }
 
