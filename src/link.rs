@@ -66,7 +66,7 @@ fn os_symlink(from: &dyn AsRef<Path>, to: &dyn AsRef<Path>) -> io::Result<()> {
 #[cfg(target_family = "windows")]
 fn os_symlink(from: &dyn AsRef<Path>, to: &dyn AsRef<Path>) -> io::Result<()> {
     if from.as_ref().is_dir() {
-        return std::os::windows::fs::symlink_dir(from, to)
+        return std::os::windows::fs::symlink_dir(from, to);
     }
 
     std::os::windows::fs::symlink_file(from, to)
