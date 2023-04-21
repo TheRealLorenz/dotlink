@@ -163,4 +163,31 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn symlink_destination_exists() -> io::Result<()> {
+        let dir = tempdir()?;
+        File::create(dir.path().join("file"))?;
+        File::create(dir.path().join("file2"))?;
+
+        assert!(matches!(
+            symlink(&dir.path().join("file"), &dir.path().join("file2")),
+            Err(LinkError::DestinationExists)
+        ));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_destination_directory_not_found() -> io::Result<()> {
+        let dir = tempdir()?;
+        File::create(dir.path().join("file"))?;
+
+        assert!(matches!(
+            symlink(&dir.path().join("file"), &dir.path().join("dir").join("file2")),
+            Err(LinkError::DestinationDirectoryNotFound)
+        ));
+
+        Ok(())
+    }
 }
