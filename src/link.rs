@@ -31,7 +31,7 @@ impl<T: AsRef<Path>> Symlink for T {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 enum LinkSuccess {
     Linked,
     AlreadyLinked,
@@ -130,10 +130,10 @@ mod tests {
         let dir = tempdir()?;
         File::create(dir.path().join("file"))?;
 
-        assert_eq!(
+        assert!(matches!(
             symlink(&dir.path().join("file"), &dir.path().join("file2"))?,
             LinkSuccess::Linked
-        );
+        ));
 
         Ok(())
     }
@@ -144,10 +144,10 @@ mod tests {
         File::create(dir.path().join("file"))?;
         symlink(&dir.path().join("file"), &dir.path().join("file2"))?;
 
-        assert_eq!(
+        assert!(matches!(
             symlink(&dir.path().join("file"), &dir.path().join("file2"))?,
             LinkSuccess::AlreadyLinked
-        );
+        ));
 
         Ok(())
     }
