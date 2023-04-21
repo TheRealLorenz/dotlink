@@ -39,6 +39,7 @@ enum LinkSuccess {
 enum LinkError {
     SourceNotFound,
     DestinationExists,
+    DestinationDirectoryNotFound,
     Io(io::Error),
 }
 
@@ -47,6 +48,7 @@ impl fmt::Display for LinkError {
         match self {
             LinkError::SourceNotFound => write!(f, "source doesn't exist"),
             LinkError::DestinationExists => write!(f, "destination already exists"),
+            LinkError::DestinationDirectoryNotFound => write!(f, "destination directory not found"),
             LinkError::Io(e) => write!(f, "{e}"),
         }
     }
@@ -75,6 +77,10 @@ fn os_symlink(from: &dyn AsRef<Path>, to: &dyn AsRef<Path>) -> io::Result<()> {
 fn symlink(from: &Path, to: &Path) -> Result<LinkSuccess, LinkError> {
     if !from.exists() {
         return Err(LinkError::SourceNotFound);
+    }
+
+    if !to.parent().map(|parent| parent.exists()).unwrap_or(false) {
+        return Err(LinkError::DestinationDirectoryNotFound);
     }
 
     if let Err(e) = os_symlink(&from, &to) {
