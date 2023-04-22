@@ -83,7 +83,7 @@ preset_name:
 }
 ```
 
-The program than simply symlinks every file specified by `name` or `names` to the corresponding `to`.
+The program then simply symlinks every file specified by `name` or `names` to the corresponding `to`.
 
 ### Presets example
 
