@@ -1,8 +1,8 @@
-# dotlink [![crates.io](https://img.shields.io/crates/v/dotlink)](https://crates.io/crates/dotlink)
-
 A simple program that can help you link all your dotfiles in place. 
 
 Supports multiple presets, in order to avoid linking every file in every machine.
+
+If you need additional info make sure to visit the project on [github](https://github.com/TheRealLorenz/dotlink).
 
 ## Features!
 
@@ -85,75 +85,6 @@ preset_name:
 
 The program then simply symlinks every file specified by `name` or `names` to the corresponding `to`.
 
-### Presets example
-
-```toml
-[[linux-wayland]]
-names = [
-  'sway',
-  'sov',
-  'zsh',
-  'nushell',
-  'waybar'
-]
-to = '~/.config'
-
-[[linux-wayland]]
-name = 'rc.zsh'
-to = '~/'
-rename = '.zshrc'
-
-[[linux-wayland]]
-name = 'tmux.conf'
-to = '~/'
-rename = '.tmux.conf'
-
-[[linux-xorg]]
-names = [
-  'i3',
-  'polybar',
-  'zsh',
-  'nushell'
-]
-to = '~/.config'
-
-[[linux-xorg]]
-name = 'rc.zsh'
-to = '~/'
-rename = '.zshrc'
-
-[[linux-xorg]]
-name = 'tmux.conf'
-to = '~/'
-rename = '.tmux.conf' 
-
-[[server]]
-name = 'tmux.conf'
-to = '~/'
-rename = '.tmux.conf'
-
-[[macOS]]
-name = 'zsh'
-to = '~/.config'
-
-[[macOS]]
-name = 'rc.zsh'
-to = '~/'
-rename = '.zshrc'
-
-[[macOS]]
-name = 'tmux.conf'
-to = '~/'
-rename = '.tmux.conf'
-
-[[macOS]]
-name = 'nushell'
-to = '~/Application Support'
-
-```
-
-The example above defines 4 **presets**: **linux-wayland**, **linux-xorg**, **server**, **macOS**.
-  
 ## Usage
 
 Running `dotlink -h` will show the help message
@@ -173,34 +104,3 @@ Options:
 ```
 
 > `PATH` represents the **path to the dotfiles**. Defaults to the **current working directory**.
-
-## Installing
-
-### From crates.io
-
-Simply run
-
-```bash
-$ cargo install dotlink
-```
-
-### Manual
-
-Clone the repository
-
-```bash
-$ git clone https://github.com/TheRealLorenz/dotlink
-```
-
-Install with [Cargo](https://docs.rs/cargo/latest/cargo/)
-
-```bash
-$ cargo install --path dotlink
-```
-
-## Planned features
-
-- Tests.
-- Automated tests.
-- Manage linked files.
-- Force linking.

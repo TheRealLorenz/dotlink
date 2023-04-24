@@ -106,7 +106,7 @@ impl Presets {
 
         match extension {
             "toml" => Self::from_toml(&path),
-            "yaml" => Self::from_yaml(&path),
+            "yaml" | "yml" => Self::from_yaml(&path),
             "json" => Self::from_json(&path),
             _ => Err(error::LoadError::InvalidExtension),
         }
