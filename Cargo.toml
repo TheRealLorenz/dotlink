@@ -1,6 +1,6 @@
 [package]
 name = "dotlink"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license-file = "LICENSE"
 description = "No non-sense dotfiles linker"
