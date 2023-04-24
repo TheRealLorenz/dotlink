@@ -176,6 +176,16 @@ Options:
 
 ## Installing
 
+### From crates.io
+
+Simply run
+
+```bash
+$ cargo install dotlink
+```
+
+### Manual
+
 Clone the repository
 
 ```bash
