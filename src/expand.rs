@@ -23,7 +23,7 @@ impl fmt::Display for ExpandError {
             ExpandError::HomeDir => {
                 write!(f, "Couldn't expand path: couldn't retreive home directory")
             }
-            ExpandError::Io(e) => write!(f, "couldn't expandd path: {e}"),
+            ExpandError::Io(e) => write!(f, "couldn't expand path: {e}"),
         }
     }
 }
