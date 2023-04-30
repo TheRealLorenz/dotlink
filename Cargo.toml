@@ -2,7 +2,7 @@
 name = "dotlink"
 version = "0.1.1"
 edition = "2021"
-license-file = "LICENSE"
+license = "MIT"
 description = "No non-sense dotfiles linker"
 repository = "https://github.com/TheRealLorenz/dotlink"
 readme = "crates-io.md"
