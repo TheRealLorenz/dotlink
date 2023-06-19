@@ -1,11 +1,12 @@
 use crate::{expand, link::LinkEntry};
+use colored::*;
 use serde::Deserialize;
 use std::{
     collections::HashMap,
     fs, io,
     path::{Path, PathBuf},
 };
-use tabled::builder::Builder;
+use tabled::{builder::Builder, settings::Style};
 
 pub mod error;
 
@@ -48,7 +49,11 @@ pub struct Preset(Vec<Entry>);
 impl Preset {
     pub fn apply(&self, from_dir: &Path, dry_run: bool) -> Result<(), expand::ExpandError> {
         let mut builder = Builder::default();
-        builder.set_header(["Name", "Destination", "Result"]);
+        builder.set_header([
+            "Name".underline().to_string(),
+            "Destination".underline().to_string(),
+            "Result".underline().to_string(),
+        ]);
 
         self.0
             .iter()
@@ -83,7 +88,7 @@ impl Preset {
                 },
             )?;
 
-        println!("\n{}", builder.build());
+        println!("\n{}", builder.build().with(Style::blank()));
 
         Ok(())
     }
