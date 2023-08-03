@@ -1,14 +1,16 @@
 use crate::{expand, link::LinkEntry};
+use colored::*;
 use serde::Deserialize;
 use std::{
     collections::HashMap,
     fs, io,
     path::{Path, PathBuf},
 };
+use tabled::{builder::Builder, settings::Style};
 
 pub mod error;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 struct SingleEntry {
     name: String,
     to: String,
@@ -28,37 +30,65 @@ enum Entry {
     Multiple(MultipleEntry),
 }
 
+impl MultipleEntry {
+    fn flatten(&self) -> Vec<SingleEntry> {
+        self.names
+            .iter()
+            .map(|name| SingleEntry {
+                name: name.clone(),
+                to: self.to.clone(),
+                rename: None,
+            })
+            .collect()
+    }
+}
+
 #[derive(Deserialize)]
 pub struct Preset(Vec<Entry>);
 
 impl Preset {
     pub fn apply(&self, from_dir: &Path, dry_run: bool) -> Result<(), expand::ExpandError> {
-        for entry in &self.0 {
-            match entry {
-                Entry::Single(single_entry) => {
-                    let from = from_dir.join(&single_entry.name);
-                    let to = expand::expand_tilde(
-                        &Path::new(&single_entry.to).join(
-                            single_entry
-                                .rename
-                                .clone()
-                                .unwrap_or(single_entry.name.clone()),
-                            // Maybe .clone() could be removed
-                        ),
-                    )?;
+        let mut builder = Builder::default();
+        builder.set_header([
+            "Name".underline().to_string(),
+            "Destination".underline().to_string(),
+            "Result".underline().to_string(),
+        ]);
 
-                    LinkEntry { from, to }.symlink(dry_run);
-                }
-                Entry::Multiple(multiple_entry) => {
-                    for name in &multiple_entry.names {
-                        let from = from_dir.join(name);
-                        let to = expand::expand_tilde(Path::new(&multiple_entry.to))?.join(name);
+        self.0
+            .iter()
+            .flat_map(|entry| match entry {
+                Entry::Single(single_entry) => vec![single_entry.clone()],
+                Entry::Multiple(multiple_entry) => multiple_entry.flatten(),
+            })
+            .map(|single_entry| {
+                let from = from_dir.join(&single_entry.name);
+                let to = expand::expand_tilde(
+                    &Path::new(&single_entry.to)
+                        .join(single_entry.rename.unwrap_or(single_entry.name)),
+                )?;
+                Ok(LinkEntry { from, to })
+            })
+            .try_for_each(
+                |link_entry: Result<_, expand::ExpandError>| -> Result<(), expand::ExpandError> {
+                    let link_entry = link_entry?;
+                    builder.push_record([
+                        link_entry
+                            .from
+                            .file_name()
+                            .unwrap()
+                            .to_str()
+                            .unwrap()
+                            .to_string(),
+                        link_entry.to.display().to_string(),
+                        link_entry.symlink(dry_run).to_string(),
+                    ]);
 
-                        LinkEntry { from, to }.symlink(dry_run);
-                    }
-                }
-            }
-        }
+                    Ok(())
+                },
+            )?;
+
+        println!("\n{}", builder.build().with(Style::blank()));
 
         Ok(())
     }

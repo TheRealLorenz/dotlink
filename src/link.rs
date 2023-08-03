@@ -10,17 +10,6 @@ pub struct LinkEntry {
     pub to: PathBuf,
 }
 
-impl fmt::Display for LinkEntry {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "'{}' -> '{}'",
-            self.from.file_name().unwrap().to_str().unwrap(),
-            self.to.as_path().display()
-        )
-    }
-}
-
 trait Symlink {
     fn resolves_to(&self, to: &Path) -> io::Result<bool>;
 }
@@ -45,6 +34,15 @@ enum LinkError {
     Io(io::Error),
 }
 
+impl fmt::Display for LinkSuccess {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            LinkSuccess::Linked => write!(f, "linked/ok to link"),
+            LinkSuccess::AlreadyLinked => write!(f, "already linked"),
+        }
+    }
+}
+
 impl fmt::Display for LinkError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -53,6 +51,32 @@ impl fmt::Display for LinkError {
             LinkError::DestinationDirectoryNotFound => write!(f, "destination directory not found"),
             LinkError::Io(e) => write!(f, "{e}"),
         }
+    }
+}
+
+pub struct LinkResult(Result<LinkSuccess, LinkError>);
+
+impl From<Result<LinkSuccess, LinkError>> for LinkResult {
+    fn from(value: Result<LinkSuccess, LinkError>) -> Self {
+        LinkResult(value)
+    }
+}
+
+impl fmt::Display for LinkResult {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let (icon, color, message) = match &self.0 {
+            Ok(success) => (
+                "✓",
+                match success {
+                    LinkSuccess::Linked => Color::Green,
+                    LinkSuccess::AlreadyLinked => Color::Yellow,
+                },
+                success.to_string(),
+            ),
+            Err(e) => ("✘", Color::Red, e.to_string()),
+        };
+
+        write!(f, "{}", &format!("{} {}", icon, message).color(color))
     }
 }
 
@@ -122,25 +146,12 @@ fn symlink(from: &Path, to: &Path) -> Result<LinkSuccess, LinkError> {
 }
 
 impl LinkEntry {
-    pub fn symlink(&self, dry_run: bool) {
-        print!("Linking {}: ", self);
-
-        if dry_run {
-            match symlink_dry(&self.from, &self.to) {
-                Ok(LinkSuccess::Linked) => println!("{}", "✓ - ok to link".green().bold()),
-                Ok(LinkSuccess::AlreadyLinked) => {
-                    println!("{}", "✓ - already linked".yellow().bold())
-                }
-                Err(e) => println!("{}", format!("X - {}", e).red().bold()),
-            }
-            return;
+    pub fn symlink(&self, dry_run: bool) -> LinkResult {
+        match dry_run {
+            true => symlink_dry(&self.from, &self.to),
+            false => symlink(&self.from, &self.to),
         }
-
-        match symlink(&self.from, &self.to) {
-            Ok(LinkSuccess::Linked) => println!("{}", "✓ - linked".green().bold()),
-            Ok(LinkSuccess::AlreadyLinked) => println!("{}", "✓ - already linked".yellow().bold()),
-            Err(e) => println!("{}", format!("X - {}", e).red().bold()),
-        }
+        .into()
     }
 }
 
