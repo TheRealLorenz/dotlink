@@ -1,4 +1,4 @@
-# dotlink [![crates.io](https://img.shields.io/crates/v/dotlink)](https://crates.io/crates/dotlink)
+# dotlink [![crates.io](https://img.shields.io/crates/v/dotlink)](https://crates.io/crates/dotlink) ![ci](https://github.com/TheRealLorenz/dotlink/actions/workflows/ci.yaml/badge.svg)
 
 A simple program that can help you link all your dotfiles in place. 
 

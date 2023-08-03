@@ -3,7 +3,8 @@ default:
     to: "~/.config"
 
   - name: "tmux.conf"
-    to: "~/.tmux.conf"
+    to: "~/"
+    rename: ".tmux.conf"
 
 
 macOS:
@@ -11,4 +12,5 @@ macOS:
     to: "~/.config"
 
   - name: "tmux.conf"
-    to: "~/.tmux.conf"
+    to: "~/"
+    rename: ".tmux.conf"
