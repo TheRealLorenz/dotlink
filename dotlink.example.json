@@ -6,7 +6,8 @@
     },
     {
       "name": "tmux.conf",
-      "to": "~/.tmux.conf"
+      "to": "~/",
+      "rename": ".tmux.conf"
     }
   ],
 
@@ -17,7 +18,8 @@
     },
     {
       "name": "tmux.conf",
-      "to": "~/.tmux.conf"
+      "to": "~/",
+      "rename": ".tmux.conf"
     }
   ]
 }
