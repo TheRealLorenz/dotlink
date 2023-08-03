@@ -31,11 +31,13 @@ impl<T: AsRef<Path>> Symlink for T {
     }
 }
 
+#[derive(Debug)]
 enum LinkSuccess {
     Linked,
     AlreadyLinked,
 }
 
+#[derive(Debug)]
 enum LinkError {
     SourceNotFound,
     DestinationExists,
@@ -139,5 +141,79 @@ impl LinkEntry {
             Ok(LinkSuccess::AlreadyLinked) => println!("{}", "✓ - already linked".yellow().bold()),
             Err(e) => println!("{}", format!("X - {}", e).red().bold()),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use tempfile::tempdir;
+
+    use super::*;
+    use std::fs::File;
+
+    #[test]
+    fn symlink_linked() -> io::Result<()> {
+        let dir = tempdir()?;
+        File::create(dir.path().join("file"))?;
+
+        assert!(matches!(
+            symlink(&dir.path().join("file"), &dir.path().join("file2")),
+            Ok(LinkSuccess::Linked)
+        ));
+
+        Ok(())
+    }
+
+    #[test]
+    fn symlink_already_linked() -> io::Result<()> {
+        let dir = tempdir()?;
+        File::create(dir.path().join("file"))?;
+        os_symlink(&dir.path().join("file"), &dir.path().join("file2"))?;
+
+        assert!(matches!(
+            symlink(&dir.path().join("file"), &dir.path().join("file2")),
+            Ok(LinkSuccess::AlreadyLinked)
+        ));
+
+        Ok(())
+    }
+
+    #[test]
+    fn symlink_source_not_found() -> io::Result<()> {
+        let dir = tempdir()?;
+
+        assert!(matches!(
+            symlink(&dir.path().join("file"), &dir.path().join("file2")),
+            Err(LinkError::SourceNotFound)
+        ));
+
+        Ok(())
+    }
+
+    #[test]
+    fn symlink_destination_exists() -> io::Result<()> {
+        let dir = tempdir()?;
+        File::create(dir.path().join("file"))?;
+        File::create(dir.path().join("file2"))?;
+
+        assert!(matches!(
+            symlink(&dir.path().join("file"), &dir.path().join("file2")),
+            Err(LinkError::DestinationExists)
+        ));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_destination_directory_not_found() -> io::Result<()> {
+        let dir = tempdir()?;
+        File::create(dir.path().join("file"))?;
+
+        assert!(matches!(
+            symlink(&dir.path().join("file"), &dir.path().join("dir").join("file2")),
+            Err(LinkError::DestinationDirectoryNotFound)
+        ));
+
+        Ok(())
     }
 }
