@@ -15,13 +15,15 @@ struct Args {
     preset: String,
 
     #[arg(short, long)]
-    list_presets: bool,
+    /// List available presets
+    list: bool,
 
     #[arg(short = 'F', long)]
     /// Custom config file location
     file: Option<PathBuf>,
 
     #[arg(long)]
+    /// Run dotlink in dry-run mode
     dry_run: bool,
 }
 
@@ -77,7 +79,7 @@ fn try_main() -> Result<(), CliError> {
         preset::Presets::from_path(&pwd)
     }?;
 
-    if args.list_presets {
+    if args.list {
         println!("Available presets: {}", presets.names().join(", "));
         std::process::exit(0);
     }
