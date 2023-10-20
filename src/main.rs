@@ -86,7 +86,7 @@ fn try_main() -> Result<(), CliError> {
 
     let preset = presets.get(&args.preset).unwrap_or_else(|| {
         println!("Invalid preset '{}'", args.preset);
-        std::process::exit(0);
+        std::process::exit(1);
     });
 
     println!("Loaded preset: {}", args.preset.bold());
