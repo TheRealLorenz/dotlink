@@ -152,11 +152,11 @@ impl Presets {
         Ok(presets)
     }
 
-    pub fn names(&self) -> Vec<String> {
-        self.0.keys().cloned().collect::<Vec<String>>()
+    pub fn names(&self) -> Vec<&str> {
+        self.0.keys().map(|s| s.as_str()).collect::<Vec<&str>>()
     }
 
-    pub fn get(&self, preset_name: &String) -> Option<&Preset> {
+    pub fn get(&self, preset_name: &str) -> Option<&Preset> {
         self.0.get(preset_name)
     }
 }
