@@ -1,6 +1,7 @@
+use anyhow::anyhow;
 use clap::Parser;
 use colored::*;
-use std::{env, fmt, io, path::PathBuf};
+use std::{env, path::PathBuf};
 
 mod expand;
 mod link;
@@ -27,42 +28,7 @@ struct Args {
     dry_run: bool,
 }
 
-#[derive(Debug)]
-enum CliError {
-    Load(preset::error::LoadError),
-    Io(io::Error),
-    Expand(expand::ExpandError),
-}
-
-impl From<preset::error::LoadError> for CliError {
-    fn from(value: preset::error::LoadError) -> Self {
-        CliError::Load(value)
-    }
-}
-
-impl From<io::Error> for CliError {
-    fn from(value: io::Error) -> Self {
-        CliError::Io(value)
-    }
-}
-
-impl From<expand::ExpandError> for CliError {
-    fn from(value: expand::ExpandError) -> Self {
-        CliError::Expand(value)
-    }
-}
-
-impl fmt::Display for CliError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            CliError::Load(e) => write!(f, "{e}"),
-            CliError::Io(e) => write!(f, "{e}"),
-            CliError::Expand(e) => write!(f, "{e}"),
-        }
-    }
-}
-
-fn try_main() -> Result<(), CliError> {
+fn try_main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     #[cfg(debug_assertions)]
@@ -71,7 +37,7 @@ fn try_main() -> Result<(), CliError> {
     let pwd = args
         .path
         .map(|path| expand::expand_path(&path))
-        .unwrap_or(env::current_dir().map_err(expand::ExpandError::Io))?;
+        .unwrap_or(env::current_dir().map_err(|e| anyhow!(e)))?;
 
     let presets = if let Some(file_path) = args.file {
         preset::Presets::from_path(&expand::expand_path(&file_path)?)

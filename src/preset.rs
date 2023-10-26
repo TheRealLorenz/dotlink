@@ -1,4 +1,5 @@
 use crate::{expand, link::LinkEntry};
+use anyhow::anyhow;
 use colored::*;
 use serde::Deserialize;
 use std::{
@@ -7,8 +8,6 @@ use std::{
     path::{Path, PathBuf},
 };
 use tabled::{builder::Builder, settings::Style};
-
-pub mod error;
 
 #[derive(Deserialize, Debug, Clone)]
 struct SingleEntry {
@@ -47,7 +46,7 @@ impl MultipleEntry {
 pub struct Preset(Vec<Entry>);
 
 impl Preset {
-    pub fn apply(&self, from_dir: &Path, dry_run: bool) -> Result<(), expand::ExpandError> {
+    pub fn apply(&self, from_dir: &Path, dry_run: bool) -> anyhow::Result<()> {
         let mut builder = Builder::default();
         builder.set_header([
             "Name".underline().to_string(),
@@ -69,24 +68,22 @@ impl Preset {
                 )?;
                 Ok(LinkEntry { from, to })
             })
-            .try_for_each(
-                |link_entry: Result<_, expand::ExpandError>| -> Result<(), expand::ExpandError> {
-                    let link_entry = link_entry?;
-                    builder.push_record([
-                        link_entry
-                            .from
-                            .file_name()
-                            .unwrap()
-                            .to_str()
-                            .unwrap()
-                            .to_string(),
-                        link_entry.to.display().to_string(),
-                        link_entry.symlink(dry_run).to_string(),
-                    ]);
+            .try_for_each(|link_entry: anyhow::Result<_>| -> anyhow::Result<()> {
+                let link_entry = link_entry?;
+                builder.push_record([
+                    link_entry
+                        .from
+                        .file_name()
+                        .unwrap()
+                        .to_str()
+                        .unwrap()
+                        .to_string(),
+                    link_entry.to.display().to_string(),
+                    link_entry.symlink(dry_run).to_string(),
+                ]);
 
-                    Ok(())
-                },
-            )?;
+                Ok(())
+            })?;
 
         println!("\n{}", builder.build().with(Style::blank()));
 
@@ -118,7 +115,7 @@ impl Presets {
             })
     }
 
-    pub fn from_path(path: &dyn AsRef<Path>) -> Result<Self, error::LoadError> {
+    pub fn from_path(path: &dyn AsRef<Path>) -> anyhow::Result<Self> {
         let path = if path.as_ref().is_dir() {
             Self::get_config_file_name(path).ok_or(io::Error::new(
                 io::ErrorKind::NotFound,
@@ -130,7 +127,7 @@ impl Presets {
 
         let extension = path
             .extension()
-            .ok_or(error::LoadError::InvalidExtension)?
+            .ok_or(anyhow!("Invalid config file extension"))?
             .to_str()
             .unwrap();
 
@@ -138,25 +135,25 @@ impl Presets {
             "toml" => Self::from_toml(&path),
             "yaml" | "yml" => Self::from_yaml(&path),
             "json" => Self::from_json(&path),
-            _ => Err(error::LoadError::InvalidExtension),
+            _ => Err(anyhow!("Invalid config file extension")),
         }
     }
 
-    fn from_toml(path: &dyn AsRef<Path>) -> Result<Self, error::LoadError> {
+    fn from_toml(path: &dyn AsRef<Path>) -> anyhow::Result<Self> {
         let file_content = fs::read_to_string(path)?;
         let presets = toml::from_str::<Presets>(&file_content)?;
 
         Ok(presets)
     }
 
-    fn from_json(path: &dyn AsRef<Path>) -> Result<Self, error::LoadError> {
+    fn from_json(path: &dyn AsRef<Path>) -> anyhow::Result<Self> {
         let file_content = fs::read_to_string(path)?;
         let presets = serde_json::from_str::<Presets>(&file_content)?;
 
         Ok(presets)
     }
 
-    fn from_yaml(path: &dyn AsRef<Path>) -> Result<Self, error::LoadError> {
+    fn from_yaml(path: &dyn AsRef<Path>) -> anyhow::Result<Self> {
         let file_content = fs::read_to_string(path)?;
         let presets = serde_yaml::from_str::<Presets>(&file_content)?;
 
