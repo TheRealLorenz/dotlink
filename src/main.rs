@@ -39,11 +39,8 @@ fn try_main() -> anyhow::Result<()> {
         .map(|path| expand::expand_path(&path))
         .unwrap_or(env::current_dir().map_err(|e| anyhow!(e)))?;
 
-    let presets = if let Some(file_path) = args.file {
-        preset::Presets::from_path(&expand::expand_path(&file_path)?)
-    } else {
-        preset::Presets::from_path(&pwd)
-    }?;
+    let config_file_path = args.file.as_ref().unwrap_or(&pwd);
+    let presets = preset::Presets::from_config(config_file_path)?;
 
     if args.list {
         println!("Available presets: {}", presets.names().join(", "));

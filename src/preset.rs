@@ -4,7 +4,7 @@ use colored::*;
 use serde::Deserialize;
 use std::{
     collections::HashMap,
-    fs, io,
+    fs,
     path::{Path, PathBuf},
 };
 use tabled::{builder::Builder, settings::Style};
@@ -28,6 +28,8 @@ enum Entry {
     Single(SingleEntry),
     Multiple(MultipleEntry),
 }
+
+const DEFAULT_CONFIG_FILES: &[&str; 3] = &["dotlink.toml", "dotlink.yaml", "dotlink.json"];
 
 impl MultipleEntry {
     fn flatten(&self) -> Vec<SingleEntry> {
@@ -95,34 +97,24 @@ impl Preset {
 pub struct Presets(HashMap<String, Preset>);
 
 impl Presets {
-    fn get_config_file_name(path: &dyn AsRef<Path>) -> Option<PathBuf> {
-        path.as_ref()
-            .read_dir()
+    fn get_config_file_name(path: &Path) -> Option<PathBuf> {
+        path.read_dir()
             .ok()?
-            .filter_map(|entry| {
-                if let Ok(entry) = entry {
-                    return Some(entry.path());
-                }
-                None
+            .filter_map(|entry| match entry {
+                Ok(entry) => Some(entry.path()),
+                Err(_) => None,
             })
-            .find(|entry| {
-                if let Some(file_name) = entry.file_name() {
-                    return ["dotlink.toml", "dotlink.yaml", "dotlink.json"]
-                        .contains(&file_name.to_str().unwrap());
-                }
-
-                false
+            .find(|entry| match entry.file_name() {
+                Some(file_name) => DEFAULT_CONFIG_FILES.contains(&file_name.to_str().unwrap()),
+                None => false,
             })
     }
 
-    pub fn from_path(path: &dyn AsRef<Path>) -> anyhow::Result<Self> {
-        let path = if path.as_ref().is_dir() {
-            Self::get_config_file_name(path).ok_or(io::Error::new(
-                io::ErrorKind::NotFound,
-                "config file not found",
-            ))?
+    pub fn from_config(config_path: &Path) -> anyhow::Result<Self> {
+        let path = if config_path.is_dir() {
+            Self::get_config_file_name(config_path).ok_or(anyhow!("config file not found"))?
         } else {
-            PathBuf::from(path.as_ref())
+            config_path.into()
         };
 
         let extension = path
