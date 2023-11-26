@@ -1,6 +1,6 @@
 use crate::{expand, link::LinkEntry};
 use anyhow::anyhow;
-use colored::*;
+use colored::Colorize;
 use serde::Deserialize;
 use std::{
     collections::HashMap,
@@ -153,7 +153,7 @@ impl Presets {
     }
 
     pub fn names(&self) -> Vec<&str> {
-        self.0.keys().map(|s| s.as_str()).collect::<Vec<&str>>()
+        self.0.keys().map(String::as_str).collect::<Vec<&str>>()
     }
 
     pub fn get(&self, preset_name: &str) -> Option<&Preset> {

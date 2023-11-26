@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use clap::Parser;
-use colored::*;
+use colored::Colorize;
 use std::{env, path::PathBuf};
 
 mod expand;
@@ -36,8 +36,9 @@ fn try_main() -> anyhow::Result<()> {
 
     let pwd = args
         .path
-        .map(|path| expand::expand_path(&path))
-        .unwrap_or(env::current_dir().map_err(|e| anyhow!(e)))?;
+        .map_or(env::current_dir().map_err(|e| anyhow!(e)), |path| {
+            expand::expand_path(&path)
+        })?;
 
     let config_file_path = args.file.as_ref().unwrap_or(&pwd);
     let presets = preset::Presets::from_config(config_file_path)?;

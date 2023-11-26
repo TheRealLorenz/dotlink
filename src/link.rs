@@ -1,4 +1,4 @@
-use colored::*;
+use colored::{Color, Colorize};
 use std::{
     fmt, fs,
     io::{self, ErrorKind},
@@ -76,7 +76,7 @@ impl fmt::Display for LinkResult {
             Err(e) => ("✘", Color::Red, e.to_string()),
         };
 
-        write!(f, "{}", &format!("{} {}", icon, message).color(color))
+        write!(f, "{}", &format!("{icon} {message}").color(color))
     }
 }
 
@@ -105,7 +105,7 @@ fn symlink_dry(from: &Path, to: &Path) -> Result<LinkSuccess, LinkError> {
         return Err(LinkError::SourceNotFound);
     }
 
-    if !to.parent().map(|parent| parent.exists()).unwrap_or(false) {
+    if !to.parent().is_some_and(Path::exists) {
         return Err(LinkError::DestinationDirectoryNotFound);
     }
 
@@ -125,7 +125,7 @@ fn symlink(from: &Path, to: &Path) -> Result<LinkSuccess, LinkError> {
         return Err(LinkError::SourceNotFound);
     }
 
-    if !to.parent().map(|parent| parent.exists()).unwrap_or(false) {
+    if !to.parent().is_some_and(Path::exists) {
         return Err(LinkError::DestinationDirectoryNotFound);
     }
 
@@ -147,11 +147,11 @@ fn symlink(from: &Path, to: &Path) -> Result<LinkSuccess, LinkError> {
 
 impl LinkEntry {
     pub fn symlink(&self, dry_run: bool) -> LinkResult {
-        match dry_run {
-            true => symlink_dry(&self.from, &self.to),
-            false => symlink(&self.from, &self.to),
+        if dry_run {
+            symlink_dry(&self.from, &self.to).into()
+        } else {
+            symlink(&self.from, &self.to).into()
         }
-        .into()
     }
 }
 
@@ -221,7 +221,10 @@ mod tests {
         File::create(dir.path().join("file"))?;
 
         assert!(matches!(
-            symlink(&dir.path().join("file"), &dir.path().join("dir").join("file2")),
+            symlink(
+                &dir.path().join("file"),
+                &dir.path().join("dir").join("file2")
+            ),
             Err(LinkError::DestinationDirectoryNotFound)
         ));
 
