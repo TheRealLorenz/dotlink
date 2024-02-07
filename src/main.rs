@@ -37,7 +37,7 @@ fn try_main() -> anyhow::Result<()> {
     let pwd = args
         .path
         .map_or(env::current_dir().map_err(|e| anyhow!(e)), |path| {
-            expand::expand_path(&path)
+            expand::path(path)
         })?;
 
     let config_file_path = args.file.as_ref().unwrap_or(&pwd);

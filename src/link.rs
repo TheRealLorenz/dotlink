@@ -1,4 +1,3 @@
-use colored::{Color, Colorize};
 use std::{
     fmt, fs,
     io::{self, ErrorKind},
@@ -11,78 +10,52 @@ pub struct LinkEntry {
 }
 
 trait Symlink {
-    fn resolves_to(&self, to: &Path) -> io::Result<bool>;
+    fn resolves_to<P: AsRef<Path>>(&self, to: P) -> io::Result<bool>;
 }
 
 impl<T: AsRef<Path>> Symlink for T {
-    fn resolves_to(&self, destination: &Path) -> io::Result<bool> {
-        Ok(fs::read_link(self)? == destination)
+    fn resolves_to<P: AsRef<Path>>(&self, destination: P) -> io::Result<bool> {
+        Ok(fs::read_link(self)? == destination.as_ref())
     }
 }
 
 #[derive(Debug)]
-enum LinkSuccess {
+pub enum Success {
     Linked,
     AlreadyLinked,
 }
 
 #[derive(Debug)]
-enum LinkError {
+pub enum Error {
     SourceNotFound,
     DestinationExists,
     DestinationDirectoryNotFound,
     Io(io::Error),
 }
 
-impl fmt::Display for LinkSuccess {
+impl fmt::Display for Success {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            LinkSuccess::Linked => write!(f, "linked/ok to link"),
-            LinkSuccess::AlreadyLinked => write!(f, "already linked"),
+            Success::Linked => write!(f, "linked/ok to link"),
+            Success::AlreadyLinked => write!(f, "already linked"),
         }
     }
 }
 
-impl fmt::Display for LinkError {
+impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            LinkError::SourceNotFound => write!(f, "source doesn't exist"),
-            LinkError::DestinationExists => write!(f, "destination already exists"),
-            LinkError::DestinationDirectoryNotFound => write!(f, "destination directory not found"),
-            LinkError::Io(e) => write!(f, "{e}"),
+            Error::SourceNotFound => write!(f, "source doesn't exist"),
+            Error::DestinationExists => write!(f, "destination already exists"),
+            Error::DestinationDirectoryNotFound => write!(f, "destination directory not found"),
+            Error::Io(e) => write!(f, "{e}"),
         }
     }
 }
 
-pub struct LinkResult(Result<LinkSuccess, LinkError>);
-
-impl From<Result<LinkSuccess, LinkError>> for LinkResult {
-    fn from(value: Result<LinkSuccess, LinkError>) -> Self {
-        LinkResult(value)
-    }
-}
-
-impl fmt::Display for LinkResult {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let (icon, color, message) = match &self.0 {
-            Ok(success) => (
-                "✓",
-                match success {
-                    LinkSuccess::Linked => Color::Green,
-                    LinkSuccess::AlreadyLinked => Color::Yellow,
-                },
-                success.to_string(),
-            ),
-            Err(e) => ("✘", Color::Red, e.to_string()),
-        };
-
-        write!(f, "{}", &format!("{icon} {message}").color(color))
-    }
-}
-
-impl From<io::Error> for LinkError {
+impl From<io::Error> for Error {
     fn from(value: io::Error) -> Self {
-        LinkError::Io(value)
+        Error::Io(value)
     }
 }
 
@@ -100,57 +73,57 @@ fn os_symlink(from: &dyn AsRef<Path>, to: &dyn AsRef<Path>) -> io::Result<()> {
     std::os::windows::fs::symlink_file(from, to)
 }
 
-fn symlink_dry(from: &Path, to: &Path) -> Result<LinkSuccess, LinkError> {
+fn symlink_dry(from: &Path, to: &Path) -> Result<Success, Error> {
     if !from.exists() {
-        return Err(LinkError::SourceNotFound);
+        return Err(Error::SourceNotFound);
     }
 
     if !to.parent().is_some_and(Path::exists) {
-        return Err(LinkError::DestinationDirectoryNotFound);
+        return Err(Error::DestinationDirectoryNotFound);
     }
 
     if to.exists() {
         if !to.is_symlink() || !to.resolves_to(from)? {
-            return Err(LinkError::DestinationExists);
+            return Err(Error::DestinationExists);
         }
 
-        return Ok(LinkSuccess::AlreadyLinked);
+        return Ok(Success::AlreadyLinked);
     }
 
-    Ok(LinkSuccess::Linked)
+    Ok(Success::Linked)
 }
 
-fn symlink(from: &Path, to: &Path) -> Result<LinkSuccess, LinkError> {
+fn symlink(from: &Path, to: &Path) -> Result<Success, Error> {
     if !from.exists() {
-        return Err(LinkError::SourceNotFound);
+        return Err(Error::SourceNotFound);
     }
 
     if !to.parent().is_some_and(Path::exists) {
-        return Err(LinkError::DestinationDirectoryNotFound);
+        return Err(Error::DestinationDirectoryNotFound);
     }
 
     if let Err(e) = os_symlink(&from, &to) {
         return match e.kind() {
             ErrorKind::AlreadyExists => {
                 if !to.is_symlink() || !to.resolves_to(from)? {
-                    return Err(LinkError::DestinationExists);
+                    return Err(Error::DestinationExists);
                 }
 
-                return Ok(LinkSuccess::AlreadyLinked);
+                return Ok(Success::AlreadyLinked);
             }
-            _ => Err(LinkError::Io(e)),
+            _ => Err(Error::Io(e)),
         };
     }
 
-    Ok(LinkSuccess::Linked)
+    Ok(Success::Linked)
 }
 
 impl LinkEntry {
-    pub fn symlink(&self, dry_run: bool) -> LinkResult {
+    pub fn symlink(&self, dry_run: bool) -> Result<Success, Error> {
         if dry_run {
-            symlink_dry(&self.from, &self.to).into()
+            symlink_dry(&self.from, &self.to)
         } else {
-            symlink(&self.from, &self.to).into()
+            symlink(&self.from, &self.to)
         }
     }
 }
@@ -169,7 +142,7 @@ mod tests {
 
         assert!(matches!(
             symlink(&dir.path().join("file"), &dir.path().join("file2")),
-            Ok(LinkSuccess::Linked)
+            Ok(Success::Linked)
         ));
 
         Ok(())
@@ -183,7 +156,7 @@ mod tests {
 
         assert!(matches!(
             symlink(&dir.path().join("file"), &dir.path().join("file2")),
-            Ok(LinkSuccess::AlreadyLinked)
+            Ok(Success::AlreadyLinked)
         ));
 
         Ok(())
@@ -195,7 +168,7 @@ mod tests {
 
         assert!(matches!(
             symlink(&dir.path().join("file"), &dir.path().join("file2")),
-            Err(LinkError::SourceNotFound)
+            Err(Error::SourceNotFound)
         ));
 
         Ok(())
@@ -209,7 +182,7 @@ mod tests {
 
         assert!(matches!(
             symlink(&dir.path().join("file"), &dir.path().join("file2")),
-            Err(LinkError::DestinationExists)
+            Err(Error::DestinationExists)
         ));
 
         Ok(())
@@ -225,7 +198,7 @@ mod tests {
                 &dir.path().join("file"),
                 &dir.path().join("dir").join("file2")
             ),
-            Err(LinkError::DestinationDirectoryNotFound)
+            Err(Error::DestinationDirectoryNotFound)
         ));
 
         Ok(())
