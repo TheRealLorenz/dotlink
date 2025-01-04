@@ -4,6 +4,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::{expand, preset};
+
 pub struct LinkEntry {
     pub from: PathBuf,
     pub to: PathBuf,
@@ -119,6 +121,12 @@ fn symlink(from: &Path, to: &Path) -> Result<Success, Error> {
 }
 
 impl LinkEntry {
+    pub fn new(entry: &preset::Entry, from_dir: &Path) -> anyhow::Result<Self> {
+        let from = from_dir.join(&entry.name);
+        let to = expand::tilde(&entry.to)?.join(entry.rename.as_ref().unwrap_or(&entry.name));
+        Ok(LinkEntry { from, to })
+    }
+
     pub fn symlink(&self, dry_run: bool) -> Result<Success, Error> {
         if dry_run {
             symlink_dry(&self.from, &self.to)

@@ -1,22 +1,12 @@
-use std::path::Path;
+use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::{expand, link::LinkEntry};
-
 #[derive(Deserialize, Debug, Clone)]
 pub struct Single {
-    name: String,
-    to: String,
-    rename: Option<String>,
-}
-
-impl Single {
-    pub fn to_link_entry(&self, from_dir: &Path) -> anyhow::Result<LinkEntry> {
-        let from = from_dir.join(&self.name);
-        let to = expand::tilde(&self.to)?.join(self.rename.as_ref().unwrap_or(&self.name));
-        Ok(LinkEntry { from, to })
-    }
+    pub name: String,
+    pub to: String,
+    pub rename: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -44,3 +34,5 @@ pub enum Raw {
     Single(Single),
     Multiple(Multiple),
 }
+
+pub type RawPresets = HashMap<String, Vec<Raw>>;

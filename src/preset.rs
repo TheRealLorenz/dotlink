@@ -7,10 +7,12 @@ use std::{
 };
 use tabled::{builder::Builder, settings::Style};
 
+use crate::link;
+
 mod entries;
 
-type RawPresets = HashMap<String, Vec<entries::Raw>>;
-pub struct Preset(Vec<entries::Single>);
+pub type Entry = entries::Single;
+pub struct Preset(Vec<Entry>);
 pub struct Presets(HashMap<String, Preset>);
 
 const DEFAULT_CONFIG_FILES: &[&str; 3] = &["dotlink.toml", "dotlink.yaml", "dotlink.json"];
@@ -27,7 +29,7 @@ impl Preset {
         let link_entries = self
             .0
             .iter()
-            .map(|entry| entries::Single::to_link_entry(entry, from_dir))
+            .map(|entry| link::LinkEntry::new(entry, from_dir))
             .collect::<anyhow::Result<Vec<_>>>()?;
 
         for link_entry in link_entries {
@@ -110,9 +112,9 @@ impl Presets {
         let file_content = fs::read_to_string(&path)?;
 
         let raw_presets = match extension {
-            "toml" => toml::from_str::<RawPresets>(&file_content)?,
-            "yaml" | "yml" => serde_yaml::from_str::<RawPresets>(&file_content)?,
-            "json" => serde_json::from_str::<RawPresets>(&file_content)?,
+            "toml" => toml::from_str::<entries::RawPresets>(&file_content)?,
+            "yaml" | "yml" => serde_yaml::from_str::<entries::RawPresets>(&file_content)?,
+            "json" => serde_json::from_str::<entries::RawPresets>(&file_content)?,
             _ => return Err(anyhow!("Invalid config file extension")),
         };
 
