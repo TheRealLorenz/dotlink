@@ -46,11 +46,7 @@ fn try_main() -> anyhow::Result<()> {
         None => env::current_dir()?,
     };
 
-    let ctx = Context {
-        pwd: &pwd,
-        dry_run: args.dry_run,
-    };
-
+    let ctx = Context::new(&pwd).dry_run(args.dry_run);
     let config_file = args.file.unwrap_or(pwd.join("dotlink.toml"));
 
     let presets = toml::from_str::<Presets>(&fs::read_to_string(config_file)?)?;
