@@ -21,7 +21,12 @@ fn os_symlink(from: &dyn AsRef<Path>, to: &dyn AsRef<Path>) -> io::Result<()> {
     std::os::windows::fs::symlink_file(from, to)
 }
 
-pub fn symlink(from: &Path, to: &Path, dry_run: bool) -> anyhow::Result<()> {
+pub fn symlink<T>(relative_from: T, to: &Path, ctx: &Context) -> anyhow::Result<()>
+where
+    T: AsRef<Path>,
+{
+    let from = ctx.pwd.join(relative_from);
+
     if !from.exists() {
         return Err(anyhow!("Source not found"));
     }
@@ -31,13 +36,13 @@ pub fn symlink(from: &Path, to: &Path, dry_run: bool) -> anyhow::Result<()> {
     }
 
     if to.exists() {
-        if to.is_symlink() && resolves_to(to, from)? {
+        if to.is_symlink() && resolves_to(to, &from)? {
             return Ok(());
         }
         return Err(anyhow!("Destination exists"));
     }
 
-    if !dry_run {
+    if !ctx.dry_run {
         os_symlink(&from, &to)?;
     }
 
@@ -60,7 +65,14 @@ mod tests {
         let dir = tempdir()?;
         File::create(dir.path().join("file"))?;
 
-        let result = symlink(&dir.path().join("file"), &dir.path().join("file2"), false);
+        let result = symlink(
+            "file",
+            &dir.path().join("file2"),
+            &Context {
+                dry_run: false,
+                pwd: &dir.path(),
+            },
+        );
         assert!(result.is_ok());
 
         Ok(())
@@ -72,7 +84,55 @@ mod tests {
         File::create(dir.path().join("file"))?;
         os_symlink(&dir.path().join("file"), &dir.path().join("file2"))?;
 
-        let result = symlink(&dir.path().join("file"), &dir.path().join("file2"), false);
+        let result = symlink(
+            "file",
+            &dir.path().join("file2"),
+            &Context {
+                dry_run: false,
+                pwd: &dir.path(),
+            },
+        );
+        assert!(result.is_ok());
+
+        Ok(())
+    }
+
+    #[test]
+    fn symlink_other_link() -> io::Result<()> {
+        let dir = tempdir()?;
+        File::create(dir.path().join("file"))?;
+        File::create(dir.path().join("file2"))?;
+        os_symlink(&dir.path().join("file"), &dir.path().join("file1"))?;
+
+        let result = symlink(
+            "file2",
+            &dir.path().join("file1"),
+            &Context {
+                dry_run: false,
+                pwd: &dir.path(),
+            },
+        );
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().to_string(), "Destination exists");
+
+        Ok(())
+    }
+
+    #[test]
+    fn symlink_force() -> io::Result<()> {
+        let dir = tempdir()?;
+        File::create(dir.path().join("file"))?;
+        File::create(dir.path().join("file2"))?;
+        os_symlink(&dir.path().join("file"), &dir.path().join("file1"))?;
+
+        let result = symlink(
+            "file2",
+            &dir.path().join("file1"),
+            &Context {
+                dry_run: false,
+                pwd: &dir.path(),
+            },
+        );
         assert!(result.is_ok());
 
         Ok(())
@@ -82,7 +142,14 @@ mod tests {
     fn symlink_source_not_found() -> io::Result<()> {
         let dir = tempdir()?;
 
-        let result = symlink(&dir.path().join("file"), &dir.path().join("file2"), false);
+        let result = symlink(
+            "file",
+            &dir.path().join("file2"),
+            &Context {
+                dry_run: false,
+                pwd: &dir.path(),
+            },
+        );
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().to_string(), "Source not found");
 
@@ -95,7 +162,14 @@ mod tests {
         File::create(dir.path().join("file"))?;
         File::create(dir.path().join("file2"))?;
 
-        let result = symlink(&dir.path().join("file"), &dir.path().join("file2"), false);
+        let result = symlink(
+            "file",
+            &dir.path().join("file2"),
+            &Context {
+                dry_run: false,
+                pwd: &dir.path(),
+            },
+        );
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().to_string(), "Destination exists");
 
@@ -108,9 +182,12 @@ mod tests {
         File::create(dir.path().join("file"))?;
 
         let result = symlink(
-            &dir.path().join("file"),
+            "file",
             &dir.path().join("dir").join("file2"),
-            false,
+            &Context {
+                dry_run: false,
+                pwd: &dir.path(),
+            },
         );
         assert!(result.is_err());
         assert_eq!(

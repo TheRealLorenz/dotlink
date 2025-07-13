@@ -33,12 +33,10 @@ pub type Presets = HashMap<String, Vec<Entry>>;
 
 impl Symlinkable for SingleEntry {
     fn apply(&self, ctx: &Context) -> anyhow::Result<()> {
-        let src = ctx.pwd.join(&self.name);
-
         let dst_dir = expand::path(PathBuf::from(&self.to))?;
         let dst = dst_dir.join(self.rename.as_ref().unwrap_or(&self.name));
 
-        let result = link::symlink(&src, &dst, ctx.dry_run);
+        let result = link::symlink(&self.name, &dst, ctx);
         print_result(&self.name, &dst, result);
         Ok(())
     }
@@ -49,10 +47,9 @@ impl Symlinkable for MultipleEntry {
         let dst_dir = expand::path(PathBuf::from(&self.to))?;
 
         for name in &self.names {
-            let src = ctx.pwd.join(name);
             let dst = dst_dir.join(name);
 
-            let result = link::symlink(&src, &dst, ctx.dry_run);
+            let result = link::symlink(name, &dst, ctx);
             print_result(name, &dst, result);
         }
 
