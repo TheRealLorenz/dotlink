@@ -1,11 +1,15 @@
+use std::{env, fs, path::PathBuf};
+
 use anyhow::anyhow;
 use clap::Parser;
+
 use colored::Colorize;
-use std::{env, path::PathBuf};
+use parse::{Presets, Symlinkable};
 
 mod expand;
 mod link;
-mod preset;
+mod parse;
+mod print;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -34,32 +38,39 @@ fn try_main() -> anyhow::Result<()> {
     #[cfg(debug_assertions)]
     println!("Args: {args:?}");
 
-    let pwd = args
-        .path
-        .map_or(env::current_dir().map_err(|e| anyhow!(e)), |path| {
-            expand::path(path)
-        })?;
+    let pwd = match args.path {
+        Some(path) => expand::path(path)?,
+        None => env::current_dir()?,
+    };
 
-    let config_file_path = args.file.as_ref().unwrap_or(&pwd);
-    let presets = preset::Presets::from_config(config_file_path)?;
+    let config_file = args.file.unwrap_or(pwd.join("dotlink.toml"));
+
+    let presets = toml::from_str::<Presets>(&fs::read_to_string(config_file)?)?;
 
     if args.list {
-        println!("Available presets: {}", presets.names().join(", "));
-        std::process::exit(0);
+        if presets.is_empty() {
+            return Err(anyhow!("No available presets"));
+        }
+        println!("Availabile presets:");
+        for value in presets.keys() {
+            println!("  - {value}");
+        }
+
+        return Ok(());
     }
 
-    let preset = presets.get(&args.preset).unwrap_or_else(|| {
-        println!("Invalid preset '{}'", args.preset);
-        std::process::exit(1);
-    });
-
-    println!("Loaded preset: {}", args.preset.bold());
+    let preset = presets
+        .get(&args.preset)
+        .ok_or(anyhow!("Preset not found '{}'", args.preset))?;
 
     if args.dry_run {
-        println!("Running in {} mode", "dry-run".yellow().bold());
+        println!("{}", "Performing dry-run".bold());
     }
 
-    preset.apply(&pwd, args.dry_run)?;
+    println!("Loading preset '{}':", args.preset);
+    for item in preset {
+        item.apply(&pwd, args.dry_run)?;
+    }
 
     Ok(())
 }
@@ -69,7 +80,7 @@ fn main() {
         eprintln!("{e}");
 
         #[cfg(debug_assertions)]
-        eprintln!("Error: {e:#?}");
+        eprintln!("Debug Error: {e:#?}");
 
         std::process::exit(1);
     }

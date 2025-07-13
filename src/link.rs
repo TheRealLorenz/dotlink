@@ -1,64 +1,8 @@
-use std::{
-    fmt, fs,
-    io::{self, ErrorKind},
-    path::{Path, PathBuf},
-};
+use anyhow::anyhow;
+use std::{fs, io, path::Path};
 
-use crate::{expand, preset};
-
-pub struct LinkEntry {
-    pub from: PathBuf,
-    pub to: PathBuf,
-}
-
-trait Symlink {
-    fn resolves_to<P: AsRef<Path>>(&self, to: P) -> io::Result<bool>;
-}
-
-impl<T: AsRef<Path>> Symlink for T {
-    fn resolves_to<P: AsRef<Path>>(&self, destination: P) -> io::Result<bool> {
-        Ok(fs::read_link(self)? == destination.as_ref())
-    }
-}
-
-#[derive(Debug)]
-pub enum Success {
-    Linked,
-    AlreadyLinked,
-}
-
-#[derive(Debug)]
-pub enum Error {
-    SourceNotFound,
-    DestinationExists,
-    DestinationDirectoryNotFound,
-    Io(io::Error),
-}
-
-impl fmt::Display for Success {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Success::Linked => write!(f, "linked/ok to link"),
-            Success::AlreadyLinked => write!(f, "already linked"),
-        }
-    }
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Error::SourceNotFound => write!(f, "source doesn't exist"),
-            Error::DestinationExists => write!(f, "destination already exists"),
-            Error::DestinationDirectoryNotFound => write!(f, "destination directory not found"),
-            Error::Io(e) => write!(f, "{e}"),
-        }
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(value: io::Error) -> Self {
-        Error::Io(value)
-    }
+fn resolves_to<P: AsRef<Path>>(source: P, destination: P) -> io::Result<bool> {
+    Ok(fs::read_link(source)? == destination.as_ref())
 }
 
 #[cfg(target_family = "unix")]
@@ -75,65 +19,27 @@ fn os_symlink(from: &dyn AsRef<Path>, to: &dyn AsRef<Path>) -> io::Result<()> {
     std::os::windows::fs::symlink_file(from, to)
 }
 
-fn symlink_dry(from: &Path, to: &Path) -> Result<Success, Error> {
+pub fn symlink(from: &Path, to: &Path, dry_run: bool) -> anyhow::Result<()> {
     if !from.exists() {
-        return Err(Error::SourceNotFound);
+        return Err(anyhow!("Source not found"));
     }
 
     if !to.parent().is_some_and(Path::exists) {
-        return Err(Error::DestinationDirectoryNotFound);
+        return Err(anyhow!("Destination directory not found"));
     }
 
     if to.exists() {
-        if !to.is_symlink() || !to.resolves_to(from)? {
-            return Err(Error::DestinationExists);
+        if to.is_symlink() && resolves_to(to, from)? {
+            return Ok(());
         }
-
-        return Ok(Success::AlreadyLinked);
+        return Err(anyhow!("Destination exists"));
     }
 
-    Ok(Success::Linked)
-}
-
-fn symlink(from: &Path, to: &Path) -> Result<Success, Error> {
-    if !from.exists() {
-        return Err(Error::SourceNotFound);
+    if !dry_run {
+        os_symlink(&from, &to)?;
     }
 
-    if !to.parent().is_some_and(Path::exists) {
-        return Err(Error::DestinationDirectoryNotFound);
-    }
-
-    if let Err(e) = os_symlink(&from, &to) {
-        return match e.kind() {
-            ErrorKind::AlreadyExists => {
-                if !to.is_symlink() || !to.resolves_to(from)? {
-                    return Err(Error::DestinationExists);
-                }
-
-                return Ok(Success::AlreadyLinked);
-            }
-            _ => Err(Error::Io(e)),
-        };
-    }
-
-    Ok(Success::Linked)
-}
-
-impl LinkEntry {
-    pub fn new(entry: &preset::Entry, from_dir: &Path) -> anyhow::Result<Self> {
-        let from = from_dir.join(&entry.name);
-        let to = expand::tilde(&entry.to)?.join(entry.rename.as_ref().unwrap_or(&entry.name));
-        Ok(LinkEntry { from, to })
-    }
-
-    pub fn symlink(&self, dry_run: bool) -> Result<Success, Error> {
-        if dry_run {
-            symlink_dry(&self.from, &self.to)
-        } else {
-            symlink(&self.from, &self.to)
-        }
-    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -148,10 +54,8 @@ mod tests {
         let dir = tempdir()?;
         File::create(dir.path().join("file"))?;
 
-        assert!(matches!(
-            symlink(&dir.path().join("file"), &dir.path().join("file2")),
-            Ok(Success::Linked)
-        ));
+        let result = symlink(&dir.path().join("file"), &dir.path().join("file2"), false);
+        assert!(result.is_ok());
 
         Ok(())
     }
@@ -162,10 +66,8 @@ mod tests {
         File::create(dir.path().join("file"))?;
         os_symlink(&dir.path().join("file"), &dir.path().join("file2"))?;
 
-        assert!(matches!(
-            symlink(&dir.path().join("file"), &dir.path().join("file2")),
-            Ok(Success::AlreadyLinked)
-        ));
+        let result = symlink(&dir.path().join("file"), &dir.path().join("file2"), false);
+        assert!(result.is_ok());
 
         Ok(())
     }
@@ -174,10 +76,9 @@ mod tests {
     fn symlink_source_not_found() -> io::Result<()> {
         let dir = tempdir()?;
 
-        assert!(matches!(
-            symlink(&dir.path().join("file"), &dir.path().join("file2")),
-            Err(Error::SourceNotFound)
-        ));
+        let result = symlink(&dir.path().join("file"), &dir.path().join("file2"), false);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().to_string(), "Source not found");
 
         Ok(())
     }
@@ -188,10 +89,9 @@ mod tests {
         File::create(dir.path().join("file"))?;
         File::create(dir.path().join("file2"))?;
 
-        assert!(matches!(
-            symlink(&dir.path().join("file"), &dir.path().join("file2")),
-            Err(Error::DestinationExists)
-        ));
+        let result = symlink(&dir.path().join("file"), &dir.path().join("file2"), false);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().to_string(), "Destination exists");
 
         Ok(())
     }
@@ -201,13 +101,16 @@ mod tests {
         let dir = tempdir()?;
         File::create(dir.path().join("file"))?;
 
-        assert!(matches!(
-            symlink(
-                &dir.path().join("file"),
-                &dir.path().join("dir").join("file2")
-            ),
-            Err(Error::DestinationDirectoryNotFound)
-        ));
+        let result = symlink(
+            &dir.path().join("file"),
+            &dir.path().join("dir").join("file2"),
+            false,
+        );
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "Destination directory not found"
+        );
 
         Ok(())
     }

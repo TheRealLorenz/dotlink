@@ -1,6 +1,6 @@
 [package]
 name = "dotlink"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 license = "MIT"
 description = "No non-sense dotfiles linker"
@@ -9,21 +9,18 @@ readme = "crates-io.md"
 keywords = ["dotfiles", "link", "symlink", "management"]
 categories = ["command-line-utilities", "config", "filesystem"]
 exclude = [
-  "dotlink.example.*",
+  "dotlink.example.toml",
 ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-toml = "0.7.3"
-directories = "5.0.0"
-colored = "2.0.0"
-serde_yaml = "0.9.21"
-clap = { version = "4.1.8", features = ["derive"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0.96"
-tabled = { version = "0.12.2", features = ["color"] }
 anyhow = "1.0.75"
+clap = { version = "4.1.8", features = ["derive"] }
+colored = "2.0.0"
+directories = "5.0.0"
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.7.3"
 
 [dev-dependencies]
 tempfile = "3.5.0"
