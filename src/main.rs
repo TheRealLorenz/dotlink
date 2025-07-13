@@ -4,8 +4,11 @@ use anyhow::anyhow;
 use clap::Parser;
 
 use colored::Colorize;
-use parse::{Presets, Symlinkable};
+use context::Context;
+use link::Symlinkable;
+use parse::Presets;
 
+mod context;
 mod expand;
 mod link;
 mod parse;
@@ -43,6 +46,11 @@ fn try_main() -> anyhow::Result<()> {
         None => env::current_dir()?,
     };
 
+    let ctx = Context {
+        pwd: &pwd,
+        dry_run: args.dry_run,
+    };
+
     let config_file = args.file.unwrap_or(pwd.join("dotlink.toml"));
 
     let presets = toml::from_str::<Presets>(&fs::read_to_string(config_file)?)?;
@@ -69,7 +77,7 @@ fn try_main() -> anyhow::Result<()> {
 
     println!("Loading preset '{}':", args.preset);
     for item in preset {
-        item.apply(&pwd, args.dry_run)?;
+        item.apply(&ctx)?;
     }
 
     Ok(())

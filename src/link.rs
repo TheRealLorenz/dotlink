@@ -1,6 +1,8 @@
 use anyhow::anyhow;
 use std::{fs, io, path::Path};
 
+use crate::context::Context;
+
 fn resolves_to<P: AsRef<Path>>(source: P, destination: P) -> io::Result<bool> {
     Ok(fs::read_link(source)? == destination.as_ref())
 }
@@ -40,6 +42,10 @@ pub fn symlink(from: &Path, to: &Path, dry_run: bool) -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+pub trait Symlinkable {
+    fn apply(&self, ctx: &Context) -> anyhow::Result<()>;
 }
 
 #[cfg(test)]

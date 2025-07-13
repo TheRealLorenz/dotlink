@@ -1,11 +1,13 @@
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
+use std::{collections::HashMap, path::PathBuf};
 
 use serde::Deserialize;
 
-use crate::{expand, link, print::print_result};
+use crate::{
+    context::Context,
+    expand,
+    link::{self, Symlinkable},
+    print::print_result,
+};
 
 #[derive(Debug, Deserialize)]
 pub struct SingleEntry {
@@ -29,32 +31,28 @@ pub enum Entry {
 
 pub type Presets = HashMap<String, Vec<Entry>>;
 
-pub trait Symlinkable {
-    fn apply(&self, src_dir: &Path, dry_run: bool) -> anyhow::Result<()>;
-}
-
 impl Symlinkable for SingleEntry {
-    fn apply(&self, src_dir: &Path, dry_run: bool) -> anyhow::Result<()> {
-        let src = src_dir.join(&self.name);
+    fn apply(&self, ctx: &Context) -> anyhow::Result<()> {
+        let src = ctx.pwd.join(&self.name);
 
         let dst_dir = expand::path(PathBuf::from(&self.to))?;
         let dst = dst_dir.join(self.rename.as_ref().unwrap_or(&self.name));
 
-        let result = link::symlink(&src, &dst, dry_run);
+        let result = link::symlink(&src, &dst, ctx.dry_run);
         print_result(&self.name, &dst, result);
         Ok(())
     }
 }
 
 impl Symlinkable for MultipleEntry {
-    fn apply(&self, src_dir: &Path, dry_run: bool) -> anyhow::Result<()> {
+    fn apply(&self, ctx: &Context) -> anyhow::Result<()> {
         let dst_dir = expand::path(PathBuf::from(&self.to))?;
 
         for name in &self.names {
-            let src = src_dir.join(name);
+            let src = ctx.pwd.join(name);
             let dst = dst_dir.join(name);
 
-            let result = link::symlink(&src, &dst, dry_run);
+            let result = link::symlink(&src, &dst, ctx.dry_run);
             print_result(name, &dst, result);
         }
 
@@ -63,10 +61,10 @@ impl Symlinkable for MultipleEntry {
 }
 
 impl Symlinkable for Entry {
-    fn apply(&self, src_dir: &Path, dry_run: bool) -> anyhow::Result<()> {
+    fn apply(&self, ctx: &Context) -> anyhow::Result<()> {
         match self {
-            Entry::Single(single_entry) => single_entry.apply(src_dir, dry_run),
-            Entry::Multiple(multiple_entry) => multiple_entry.apply(src_dir, dry_run),
+            Entry::Single(single_entry) => single_entry.apply(ctx),
+            Entry::Multiple(multiple_entry) => multiple_entry.apply(ctx),
         }
     }
 }
